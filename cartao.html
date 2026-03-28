@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRCELL - Simulador de Maquininha</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #09090b; color: #fafafa; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(24, 24, 27, 0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
+        input, select { background-color: #18181b !important; border: 1px solid #27272a !important; color: white !important; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full glass-card rounded-2xl p-6 shadow-2xl">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="bg-green-500/20 p-2 rounded-lg">
+                <i data-lucide="credit-card" class="text-green-500"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Simulador de Taxas</h1>
+                <p class="text-xs text-zinc-400">BRCELL - Transparência total</p>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div>
+                <label class="text-sm font-medium mb-2 block text-zinc-300">Valor líquido que você quer receber</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">R$</span>
+                    <input type="number" id="valorLiquido" inputmode="decimal" placeholder="0,00" 
+                           class="w-full pl-10 pr-4 py-3 rounded-xl text-lg outline-none transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-sm font-medium mb-2 block text-zinc-300">Número de parcelas</label>
+                <select id="numParcelas" class="w-full p-3 rounded-xl text-md outline-none cursor-pointer">
+                    </select>
+            </div>
+
+            <button onclick="calcular()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-900/20">
+                Calcular Parcelamento
+            </button>
+
+            <div id="boxResultado" class="hidden space-y-4 pt-4 border-t border-zinc-800">
+                <div class="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800 text-center">
+                    <span class="text-zinc-500 text-xs uppercase font-bold tracking-widest">O cliente paga</span>
+                    <div id="valorBruto" class="text-3xl font-black text-white mt-1">R$ 0,00</div>
+                    <div id="detalheParcela" class="text-green-500 font-medium mt-1 text-sm"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-center text-xs">
+                    <div class="bg-zinc-900/30 p-3 rounded-lg border border-zinc-800">
+                        <span class="text-zinc-500 block mb-1">Total de Taxas</span>
+                        <span id="totalTaxas" class="font-bold text-red-400"></span>
+                    </div>
+                    <div class="bg-zinc-900/30 p-3 rounded-lg border border-zinc-800">
+                        <span class="text-zinc-500 block mb-1">Porcentagem</span>
+                        <span id="porcentagemTotal" class="font-bold text-zinc-300"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const parcelasTabela = [
+            { p: 1, proc: 2.99, parc: 0.00 }, { p: 2, proc: 2.27, parc: 3.02 },
+            { p: 3, proc: 2.27, parc: 4.15 }, { p: 4, proc: 2.27, parc: 4.92 },
+            { p: 5, proc: 2.27, parc: 5.70 }, { p: 6, proc: 2.27, parc: 6.32 },
+            { p: 7, proc: 2.37, parc: 7.29 }, { p: 8, proc: 2.37, parc: 8.09 },
+            { p: 9, proc: 2.37, parc: 8.54 }, { p: 10, proc: 2.37, parc: 8.72 },
+            { p: 11, proc: 2.37, parc: 9.39 }, { p: 12, proc: 2.37, parc: 10.12 }
+        ];
+
+        // Iniciar Dropdown
+        const sel = document.getElementById('numParcelas');
+        parcelasTabela.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.p; opt.text = `${item.p}x no cartão`;
+            sel.appendChild(opt);
+        });
+
+        function calcular() {
+            const vLiquido = parseFloat(document.getElementById('valorLiquido').value);
+            const nParc = parseInt(sel.value);
+            const resBox = document.getElementById('boxResultado');
+
+            if (!vLiquido || vLiquido <= 0) return;
+
+            const info = parcelasTabela.find(i => i.p === nParc);
+            const totalTaxaPerc = info.proc + info.parc;
+            const vBruto = vLiquido / (1 - (totalTaxaPerc / 100));
+            const vParcela = vBruto / nParc;
+            const vTaxas = vBruto - vLiquido;
+
+            document.getElementById('valorBruto').textContent = vBruto.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('detalheParcela').textContent = `${nParc}x de ${vParcela.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}`;
+            document.getElementById('totalTaxas').textContent = vTaxas.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('porcentagemTotal').textContent = totalTaxaPerc.toFixed(2) + '%';
+
+            resBox.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
