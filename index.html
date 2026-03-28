@@ -1,78 +1,168 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BRCELL Ferramentas</title>
-
+  <title>Simulador de Avaliação - BRCELL</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #fff;
-      text-align: center;
-    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f4f7f6; color: #333; }
+    .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #2e7d32; margin-bottom: 20px; }
+    
+    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+    label { font-weight: 600; margin-bottom: 5px; }
+    select, input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+    
+    .checkboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+    .checkbox-item { display: flex; align-items: center; font-size: 14px; cursor: pointer; background: #f9f9f9; padding: 8px; border-radius: 6px; }
+    .checkbox-item input { margin-right: 8px; width: 18px; height: 18px; }
 
-    header {
-      padding: 60px 20px;
-      background: #1e293b;
-    }
-
-    h1 {
-      font-size: 40px;
-      margin-bottom: 10px;
-    }
-
-    p {
-      color: #cbd5f5;
-    }
-
-    .btn {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 12px 25px;
-      background: #22c55e;
-      color: #000;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-    }
-
-    .section {
-      padding: 50px 20px;
-    }
-
-    footer {
-      padding: 20px;
-      background: #020617;
-      font-size: 14px;
-      color: #94a3b8;
-    }
+    .resultado-box { background: #e8f5e9; border: 2px solid #4caf50; border-radius: 10px; padding: 20px; text-align: center; margin-top: 20px; }
+    .valor { font-size: 32px; font-weight: 800; color: #1b5e20; display: block; }
+    
+    .btn-whatsapp { display: block; width: 100%; background: #25d366; color: white; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 15px; transition: 0.3s; }
+    .btn-whatsapp:hover { background: #128c7e; }
+    .loading { text-align: center; color: #666; font-style: italic; }
   </style>
 </head>
-
 <body>
 
-<header>
-  <h1>BRCELL Ferramentas</h1>
-  <p>Soluções e ferramentas com qualidade</p>
-  <a href="#" class="btn">Fale conosco</a>
-</header>
+<div class="container">
+  <h2>Avaliação BRCELL</h2>
+  
+  <div id="loader" class="loading">Carregando modelos atualizados...</div>
 
-<section class="section">
-  <h2>Sobre nós</h2>
-  <p>Trabalhamos com ferramentas de qualidade para facilitar seu dia a dia.</p>
-</section>
+  <div id="content" style="display:none;">
+    <div class="form-group">
+      <label>Marca:</label>
+      <select id="marca"><option value="">Todas</option></select>
+    </div>
 
-<section class="section">
-  <h2>Serviços</h2>
-  <p>Venda, manutenção e suporte técnico.</p>
-</section>
+    <div class="form-group">
+      <label>Aparelho:</label>
+      <input list="aparelhos" id="aparelho" placeholder="Digite o modelo...">
+      <datalist id="aparelhos"></datalist>
+    </div>
 
-<footer>
-  © 2026 BRCELL Ferramentas
-</footer>
+    <div class="form-group">
+      <label>Tipo de Negociação:</label>
+      <select id="tipo">
+        <option value="compra">Apenas Compra</option>
+        <option value="parte">Parte de Pagamento</option>
+      </select>
+    </div>
+
+    <label>Defeitos Identificados:</label>
+    <div class="checkboxes" id="listaDefeitos">
+      </div>
+
+    <div class="resultado-box">
+      <span>Valor Estimado:</span>
+      <span class="valor" id="resultado">R$ 0,00</span>
+    </div>
+
+    <a href="#" id="btnZap" class="btn-whatsapp" target="_blank">Enviar para WhatsApp</a>
+  </div>
+</div>
+
+<script>
+  const URL_API = "https://script.google.com/macros/s/AKfycbyObLX05NTruDPeGEqsDxCIt41m-s8z2iozVTBWrwi-EOaYg5B6IZ0q4EFoP76fHI4-/exec";
+  const WHATSAPP_LOJA = "5541999999999"; // COLOQUE SEU NÚMERO AQUI (com DDD)
+
+  let dadosPrecos = {};
+  const defeitosPermitidos = ["Tela", "Bateria", "Camera", "Placa", "Antena", "AltoFalante", "Microfone", "Conector", "Vibracall", "SO", "TampaTraseira"];
+
+  async function init() {
+    try {
+      const response = await fetch(URL_API);
+      const data = await response.json();
+      dadosPrecos = data;
+
+      renderMarcas(data.marcas);
+      setupEventListeners();
+      renderDefeitos();
+      
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    } catch (e) {
+      document.getElementById('loader').textContent = "Erro ao carregar dados. Verifique a internet.";
+    }
+  }
+
+  function renderMarcas(marcas) {
+    const select = document.getElementById('marca');
+    marcas.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      select.appendChild(opt);
+    });
+  }
+
+  function renderDefeitos() {
+    const container = document.getElementById('listaDefeitos');
+    defeitosPermitidos.forEach(d => {
+      const label = document.createElement('label');
+      label.className = 'checkbox-item';
+      label.innerHTML = `<input type="checkbox" value="${d}" class="defeito-cb"> ${d}`;
+      container.appendChild(label);
+    });
+  }
+
+  function setupEventListeners() {
+    document.getElementById('marca').onchange = filtrarModelos;
+    document.getElementById('aparelho').oninput = calcular;
+    document.getElementById('tipo').onchange = calcular;
+    document.addEventListener('change', (e) => {
+      if(e.target.classList.contains('defeito-cb')) calcular();
+    });
+  }
+
+  function filtrarModelos() {
+    const marcaSel = document.getElementById('marca').value;
+    const dl = document.getElementById('aparelhos');
+    dl.innerHTML = '';
+    
+    const filtrados = marcaSel ? dadosPrecos.aparelhos.filter(a => a.marca === marcaSel) : dadosPrecos.aparelhos;
+    filtrados.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.aparelho;
+      dl.appendChild(opt);
+    });
+    document.getElementById('aparelho').value = '';
+    calcular();
+  }
+
+  function calcular() {
+    const mod = document.getElementById('aparelho').value;
+    const tipo = document.getElementById('tipo').value;
+    const resDiv = document.getElementById('resultado');
+    
+    if (!mod || !dadosPrecos.valores[mod]) {
+      resDiv.textContent = "R$ 0,00";
+      return;
+    }
+
+    let total = parseFloat(dadosPrecos.valores[mod][tipo].valorBase) || 0;
+    let defeitosSelecionados = [];
+
+    document.querySelectorAll('.defeito-cb:checked').forEach(cb => {
+      const desconto = parseFloat(dadosPrecos.valores[mod][tipo][cb.value]) || 0;
+      total -= desconto;
+      defeitosSelecionados.push(cb.value);
+    });
+
+    if (total < 0) total = 0;
+    const valorFormatado = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    resDiv.textContent = valorFormatado;
+
+    // Atualiza Link WhatsApp
+    const msg = `Olá BRCELL! Fiz uma simulação de avaliação:%0A*Aparelho:* ${mod}%0A*Tipo:* ${tipo}%0A*Defeitos:* ${defeitosSelecionados.join(', ') || 'Nenhum'}%0A*Valor Estimado:* ${valorFormatado}`;
+    document.getElementById('btnZap').href = `https://wa.me/${WHATSAPP_LOJA}?text=${msg}`;
+  }
+
+  init();
+</script>
 
 </body>
 </html>
