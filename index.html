@@ -1,168 +1,165 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulador de Avaliação - BRCELL</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f4f7f6; color: #333; }
-    .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    h2 { text-align: center; color: #2e7d32; margin-bottom: 20px; }
-    
-    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-    label { font-weight: 600; margin-bottom: 5px; }
-    select, input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-    
-    .checkboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-    .checkbox-item { display: flex; align-items: center; font-size: 14px; cursor: pointer; background: #f9f9f9; padding: 8px; border-radius: 6px; }
-    .checkbox-item input { margin-right: 8px; width: 18px; height: 18px; }
-
-    .resultado-box { background: #e8f5e9; border: 2px solid #4caf50; border-radius: 10px; padding: 20px; text-align: center; margin-top: 20px; }
-    .valor { font-size: 32px; font-weight: 800; color: #1b5e20; display: block; }
-    
-    .btn-whatsapp { display: block; width: 100%; background: #25d366; color: white; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 15px; transition: 0.3s; }
-    .btn-whatsapp:hover { background: #128c7e; }
-    .loading { text-align: center; color: #666; font-style: italic; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRCELL - Simulador de Avaliação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #09090b; color: #fafafa; }
+        .glass-card { background: rgba(24, 24, 27, 0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
+        input, select { background-color: #18181b !important; border: 1px solid #27272a !important; color: white !important; }
+        input:focus, select:focus { border-color: #22c55e !important; box-shadow: 0 0 0 1px #22c55e !important; }
+        .checkbox-custom:checked { background-color: #22c55e; border-color: #22c55e; }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex items-center justify-center p-4">
 
-<div class="container">
-  <h2>Avaliação BRCELL</h2>
-  
-  <div id="loader" class="loading">Carregando modelos atualizados...</div>
+    <div class="max-w-md w-full glass-card rounded-2xl p-6 shadow-2xl">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="bg-green-500/20 p-2 rounded-lg">
+                <i data-lucide="smartphone" class="text-green-500"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Simulador BRCELL</h1>
+                <p class="text-xs text-zinc-400">Avaliação rápida e profissional</p>
+            </div>
+        </div>
 
-  <div id="content" style="display:none;">
-    <div class="form-group">
-      <label>Marca:</label>
-      <select id="marca"><option value="">Todas</option></select>
+        <div id="loader" class="flex flex-col items-center py-10">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-2"></div>
+            <p class="text-sm text-zinc-500">Sincronizando com planilha...</p>
+        </div>
+
+        <div id="content" class="hidden space-y-5">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium mb-1.5 block">Marca</label>
+                    <select id="marca" class="w-full p-2.5 rounded-lg text-sm outline-none transition-all">
+                        <option value="">Todas as marcas</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium mb-1.5 block">Aparelho</label>
+                    <input list="aparelhos" id="aparelho" placeholder="Ex: iPhone 13 Pro..." 
+                           class="w-full p-2.5 rounded-lg text-sm outline-none transition-all">
+                    <datalist id="aparelhos"></datalist>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium mb-1.5 block">Tipo de Negócio</label>
+                    <select id="tipo" class="w-full p-2.5 rounded-lg text-sm outline-none">
+                        <option value="compra">Apenas Compra</option>
+                        <option value="parte">Parte de Pagamento</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-sm font-medium mb-3 block">Estado do Aparelho (Marque os defeitos)</label>
+                <div class="grid grid-cols-2 gap-2" id="defeitosGrid"></div>
+            </div>
+
+            <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-5 text-center">
+                <span class="text-zinc-400 text-xs uppercase tracking-widest font-semibold">Valor Estimado</span>
+                <div id="resultado" class="text-3xl font-black text-green-500 mt-1">R$ 0,00</div>
+            </div>
+
+            <a href="#" id="btnZap" target="_blank" 
+               class="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-green-900/20">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                Enviar Orçamento
+            </a>
+        </div>
     </div>
 
-    <div class="form-group">
-      <label>Aparelho:</label>
-      <input list="aparelhos" id="aparelho" placeholder="Digite o modelo...">
-      <datalist id="aparelhos"></datalist>
-    </div>
+    <script>
+        const URL_API = "https://script.google.com/macros/s/AKfycbyObLX05NTruDPeGEqsDxCIt41m-s8z2iozVTBWrwi-EOaYg5B6IZ0q4EFoP76fHI4-/exec";
+        const WHATSAPP_LOJA = "5541999999999"; // Substitua pelo seu número real
 
-    <div class="form-group">
-      <label>Tipo de Negociação:</label>
-      <select id="tipo">
-        <option value="compra">Apenas Compra</option>
-        <option value="parte">Parte de Pagamento</option>
-      </select>
-    </div>
+        let dadosPrecos = {};
+        const defeitos = ["Tela", "Bateria", "Camera", "Placa", "Antena", "AltoFalante", "Microfone", "Conector", "Vibracall", "SO", "TampaTraseira"];
 
-    <label>Defeitos Identificados:</label>
-    <div class="checkboxes" id="listaDefeitos">
-      </div>
+        async function init() {
+            try {
+                const response = await fetch(URL_API);
+                dadosPrecos = await response.json();
+                
+                // Preencher Marcas
+                const mSelect = document.getElementById('marca');
+                dadosPrecos.marcas.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m; opt.textContent = m;
+                    mSelect.appendChild(opt);
+                });
 
-    <div class="resultado-box">
-      <span>Valor Estimado:</span>
-      <span class="valor" id="resultado">R$ 0,00</span>
-    </div>
+                // Criar Grid de Defeitos
+                const grid = document.getElementById('defeitosGrid');
+                defeitos.forEach(d => {
+                    const div = document.createElement('label');
+                    div.className = "flex items-center gap-2 p-2 rounded-lg bg-zinc-900/50 border border-zinc-800 cursor-pointer hover:bg-zinc-800 transition-colors";
+                    div.innerHTML = `<input type="checkbox" value="${d}" class="defeito-cb rounded border-zinc-700 bg-zinc-800 text-green-500 focus:ring-green-500"> <span class="text-xs text-zinc-300">${d}</span>`;
+                    grid.appendChild(div);
+                });
 
-    <a href="#" id="btnZap" class="btn-whatsapp" target="_blank">Enviar para WhatsApp</a>
-  </div>
-</div>
+                // Ativar Eventos
+                document.getElementById('marca').onchange = filtrar;
+                document.getElementById('aparelho').oninput = calcular;
+                document.getElementById('tipo').onchange = calcular;
+                document.addEventListener('change', e => { if(e.target.classList.contains('defeito-cb')) calcular(); });
 
-<script>
-  const URL_API = "https://script.google.com/macros/s/AKfycbyObLX05NTruDPeGEqsDxCIt41m-s8z2iozVTBWrwi-EOaYg5B6IZ0q4EFoP76fHI4-/exec";
-  const WHATSAPP_LOJA = "5541999999999"; // COLOQUE SEU NÚMERO AQUI (com DDD)
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+                lucide.createIcons();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loader').innerHTML = "<p class='text-red-500'>Erro na conexão</p>";
+            }
+        }
 
-  let dadosPrecos = {};
-  const defeitosPermitidos = ["Tela", "Bateria", "Camera", "Placa", "Antena", "AltoFalante", "Microfone", "Conector", "Vibracall", "SO", "TampaTraseira"];
+        function filtrar() {
+            const marca = document.getElementById('marca').value;
+            const dl = document.getElementById('aparelhos');
+            dl.innerHTML = '';
+            const filtrados = marca ? dadosPrecos.aparelhos.filter(a => a.marca === marca) : dadosPrecos.aparelhos;
+            filtrados.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.aparelho;
+                dl.appendChild(opt);
+            });
+            document.getElementById('aparelho').value = '';
+            calcular();
+        }
 
-  async function init() {
-    try {
-      const response = await fetch(URL_API);
-      const data = await response.json();
-      dadosPrecos = data;
+        function calcular() {
+            const mod = document.getElementById('aparelho').value;
+            const tipo = document.getElementById('tipo').value;
+            const resDiv = document.getElementById('resultado');
+            
+            if (!mod || !dadosPrecos.valores[mod]) {
+                resDiv.textContent = "R$ 0,00";
+                return;
+            }
 
-      renderMarcas(data.marcas);
-      setupEventListeners();
-      renderDefeitos();
-      
-      document.getElementById('loader').style.display = 'none';
-      document.getElementById('content').style.display = 'block';
-    } catch (e) {
-      document.getElementById('loader').textContent = "Erro ao carregar dados. Verifique a internet.";
-    }
-  }
+            let total = parseFloat(dadosPrecos.valores[mod][tipo].valorBase) || 0;
+            let selecionados = [];
 
-  function renderMarcas(marcas) {
-    const select = document.getElementById('marca');
-    marcas.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m; opt.textContent = m;
-      select.appendChild(opt);
-    });
-  }
+            document.querySelectorAll('.defeito-cb:checked').forEach(cb => {
+                total -= (parseFloat(dadosPrecos.valores[mod][tipo][cb.value]) || 0);
+                selecionados.push(cb.value);
+            });
 
-  function renderDefeitos() {
-    const container = document.getElementById('listaDefeitos');
-    defeitosPermitidos.forEach(d => {
-      const label = document.createElement('label');
-      label.className = 'checkbox-item';
-      label.innerHTML = `<input type="checkbox" value="${d}" class="defeito-cb"> ${d}`;
-      container.appendChild(label);
-    });
-  }
+            if (total < 0) total = 0;
+            const formatado = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            resDiv.textContent = formatado;
 
-  function setupEventListeners() {
-    document.getElementById('marca').onchange = filtrarModelos;
-    document.getElementById('aparelho').oninput = calcular;
-    document.getElementById('tipo').onchange = calcular;
-    document.addEventListener('change', (e) => {
-      if(e.target.classList.contains('defeito-cb')) calcular();
-    });
-  }
+            const msg = `Olá! Simulação BRCELL:%0A*Aparelho:* ${mod}%0A*Defeitos:* ${selecionados.join(', ') || 'Nenhum'}%0A*Total:* ${formatado}`;
+            document.getElementById('btnZap').href = `https://wa.me/${WHATSAPP_LOJA}?text=${msg}`;
+        }
 
-  function filtrarModelos() {
-    const marcaSel = document.getElementById('marca').value;
-    const dl = document.getElementById('aparelhos');
-    dl.innerHTML = '';
-    
-    const filtrados = marcaSel ? dadosPrecos.aparelhos.filter(a => a.marca === marcaSel) : dadosPrecos.aparelhos;
-    filtrados.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.aparelho;
-      dl.appendChild(opt);
-    });
-    document.getElementById('aparelho').value = '';
-    calcular();
-  }
-
-  function calcular() {
-    const mod = document.getElementById('aparelho').value;
-    const tipo = document.getElementById('tipo').value;
-    const resDiv = document.getElementById('resultado');
-    
-    if (!mod || !dadosPrecos.valores[mod]) {
-      resDiv.textContent = "R$ 0,00";
-      return;
-    }
-
-    let total = parseFloat(dadosPrecos.valores[mod][tipo].valorBase) || 0;
-    let defeitosSelecionados = [];
-
-    document.querySelectorAll('.defeito-cb:checked').forEach(cb => {
-      const desconto = parseFloat(dadosPrecos.valores[mod][tipo][cb.value]) || 0;
-      total -= desconto;
-      defeitosSelecionados.push(cb.value);
-    });
-
-    if (total < 0) total = 0;
-    const valorFormatado = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    resDiv.textContent = valorFormatado;
-
-    // Atualiza Link WhatsApp
-    const msg = `Olá BRCELL! Fiz uma simulação de avaliação:%0A*Aparelho:* ${mod}%0A*Tipo:* ${tipo}%0A*Defeitos:* ${defeitosSelecionados.join(', ') || 'Nenhum'}%0A*Valor Estimado:* ${valorFormatado}`;
-    document.getElementById('btnZap').href = `https://wa.me/${WHATSAPP_LOJA}?text=${msg}`;
-  }
-
-  init();
-</script>
-
+        init();
+    </script>
 </body>
 </html>
