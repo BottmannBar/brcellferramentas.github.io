@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRCELL - Simulador de Serviços</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #09090b; color: #fafafa; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(24, 24, 27, 0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
+        input, select { background-color: #18181b !important; border: 1px solid #27272a !important; color: white !important; }
+        .def-card { transition: all 0.2s; border: 1px solid #27272a; }
+        .def-card:has(input:checked) { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full glass-card rounded-2xl p-6 shadow-2xl">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="bg-green-500/20 p-2 rounded-lg">
+                <i data-lucide="wrench" class="text-green-500"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Simulador de Serviços</h1>
+                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Tabela de Preços BRCELL</p>
+            </div>
+        </div>
+
+        <div id="loader" class="flex flex-col items-center py-10">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-2"></div>
+            <p class="text-sm text-zinc-500">Carregando serviços...</p>
+        </div>
+
+        <div id="content" class="hidden space-y-5">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-medium mb-1.5 block text-zinc-400">Selecione a Marca</label>
+                    <select id="marca" class="w-full p-3 rounded-xl text-sm outline-none"></select>
+                </div>
+                <div>
+                    <label class="text-xs font-medium mb-1.5 block text-zinc-400">Selecione o Modelo</label>
+                    <select id="modelo" class="w-full p-3 rounded-xl text-sm outline-none"></select>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-medium mb-3 block text-zinc-400 uppercase tracking-widest">Serviços Disponíveis</label>
+                <div class="grid grid-cols-1 gap-2" id="gridServicos"></div>
+            </div>
+
+            <div class="bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800 text-center">
+                <span class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Total do Orçamento</span>
+                <div id="resultado" class="text-4xl font-black text-white mt-1">R$ 0,00</div>
+                <div id="aviso" class="text-amber-500 text-[10px] mt-2 hidden">⚠️ Alguns itens requerem consulta técnica</div>
+            </div>
+
+            <a href="#" id="btnZap" target="_blank" class="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-900/20">
+                <i data-lucide="send" class="w-5 h-5"></i>
+                Enviar via WhatsApp
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // COLOQUE AQUI A URL DA NOVA API QUE VOCÊ CRIOU NO PASSO 1
+        const URL_API = "COLE_AQUI_A_URL_DA_SUA_NOVA_API";
+        const WHATSAPP = "5541999999999";
+
+        let tabelaDados = [];
+        let cabecalhos = [];
+
+        async function carregarDados() {
+            try {
+                const res = await fetch(URL_API);
+                const data = await res.json();
+                cabecalhos = data.headers;
+                tabelaDados = data.rows;
+
+                const marcas = [...new Set(tabelaDados.map(l => l[0]))];
+                const selMarca = document.getElementById('marca');
+                selMarca.innerHTML = "<option value=''>Selecione a marca</option>" + 
+                                     marcas.map(m => `<option value="${m}">${m}</option>`).join("");
+
+                selMarca.onchange = carregarModelos;
+                document.getElementById('modelo').onchange = montarServicos;
+
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+                lucide.createIcons();
+            } catch (e) {
+                document.getElementById('loader').innerHTML = "<p class='text-red-500'>Erro ao carregar planilha</p>";
+            }
+        }
+
+        function carregarModelos() {
+            const m = document.getElementById('marca').value;
+            const modelos = tabelaDados.filter(l => l[0] === m).map(l => l[1]);
+            const selMod = document.getElementById('modelo');
+            selMod.innerHTML = "<option value=''>Selecione o modelo</option>" + 
+                               modelos.map(mod => `<option value="${mod}">${mod}</option>`).join("");
+            document.getElementById('gridServicos').innerHTML = "";
+            atualizarSoma();
+        }
+
+        function montarServicos() {
+            const m = document.getElementById('marca').value;
+            const mod = document.getElementById('modelo').value;
+            const grid = document.getElementById('gridServicos');
+            grid.innerHTML = "";
+
+            const linha = tabelaDados.find(l => l[0] === m && l[1] === mod);
+            if (!linha) return;
+
+            const nomesServicos = cabecalhos.slice(3);
+            const valoresServicos = linha.slice(3);
+
+            nomesServicos.forEach((nome, i) => {
+                const valorRaw = valoresServicos[i];
+                const valorTexto = isNaN(parseFloat(valorRaw)) ? valorRaw : "R$ " + parseFloat(valorRaw).toFixed(2).replace(".", ",");
+                
+                const card = document.createElement('label');
+                card.className = "def-card flex items-center justify-between p-3 rounded-xl cursor-pointer bg-zinc-900/30";
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" value="${valorRaw}" data-nome="${nome}" class="servico-cb w-4 h-4 accent-green-500">
+                        <span class="text-sm font-medium text-zinc-300">${nome}</span>
+                    </div>
+                    <span class="text-xs font-bold text-zinc-500">${valorTexto || '-'}</span>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.querySelectorAll('.servico-cb').forEach(cb => cb.onchange = atualizarSoma);
+        }
+
+        function atualizarSoma() {
+            const selecionados = [...document.querySelectorAll('.servico-cb:checked')];
+            const resDiv = document.getElementById('resultado');
+            const aviso = document.getElementById('aviso');
+            
+            if (selecionados.length === 0) {
+                resDiv.innerText = "R$ 0,00";
+                aviso.classList.add('hidden');
+                return;
+            }
+
+            let soma = 0;
+            let sobConsulta = false;
+            let nomesRelatorio = [];
+
+            selecionados.forEach(cb => {
+                const v = cb.value;
+                const nome = cb.getAttribute('data-nome');
+                nomesRelatorio.push(nome);
+
+                if (!isNaN(parseFloat(v)) && v !== "") {
+                    soma += parseFloat(v);
+                } else {
+                    sobConsulta = true;
+                }
+            });
+
+            if (sobConsulta) {
+                resDiv.innerText = "Sob Consulta";
+                resDiv.className = "text-2xl font-black text-amber-500 mt-1";
+                aviso.classList.remove('hidden');
+            } else {
+                resDiv.innerText = soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                resDiv.className = "text-4xl font-black text-white mt-1";
+                aviso.classList.add('hidden');
+            }
+
+            // WhatsApp link
+            const mod = document.getElementById('modelo').value;
+            const msg = `Orçamento de Serviço BRCELL:%0A*Modelo:* ${mod}%0A*Serviços:* ${nomesRelatorio.join(', ')}%0A*Valor:* ${resDiv.innerText}`;
+            document.getElementById('btnZap').href = `https://wa.me/${WHATSAPP}?text=${msg}`;
+        }
+
+        carregarDados();
+    </script>
+</body>
+</html>
