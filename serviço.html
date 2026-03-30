@@ -22,13 +22,23 @@
         }
 
         .glass-card { 
-            background: rgba(24, 24, 27, 0.7); 
+            background: rgba(24, 24, 27, 0.85); 
             border: 1px solid var(--glass-border); 
             backdrop-filter: blur(12px); 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Estilo Cupom Térmico Moderno */
+        /* CORREÇÃO DE VISIBILIDADE NOS SELECTS */
+        select {
+            background-color: #18181b !important;
+            color: #ffffff !important;
+            border: 1px solid #3f3f46 !important;
+            appearance: none;
+        }
+        select option {
+            background-color: #18181b;
+            color: #ffffff;
+        }
+
         .receipt {
             background: #111113;
             border: 1px dashed #27272a;
@@ -89,86 +99,87 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
+<body class="min-h-screen flex items-center justify-center p-6 text-zinc-200">
 
-    <div class="max-w-md w-full glass-card rounded-3xl p-8 transition-all">
+    <div class="max-w-md w-full glass-card rounded-3xl p-8 transition-all shadow-2xl">
         <div class="flex items-center justify-between mb-10">
             <div class="flex items-center gap-4">
                 <div class="bg-green-500/10 p-3 rounded-2xl border border-green-500/20">
                     <i data-lucide="cpu" class="text-green-500 w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-extrabold tracking-tighter leading-none italic">BRCELL</h1>
+                    <h1 class="text-2xl font-extrabold tracking-tighter leading-none italic text-white">BRCELL</h1>
                     <p class="text-[9px] text-zinc-500 uppercase tracking-[0.3em] font-bold mt-1.5">Premium Lab Services</p>
                 </div>
             </div>
-            <div id="status-pulse" class="flex items-center gap-2 px-2 py-1 bg-zinc-900 rounded-full border border-zinc-800">
+            <div class="flex items-center gap-2 px-2 py-1 bg-zinc-900 rounded-full border border-zinc-800">
                 <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                <span class="text-[9px] font-bold text-zinc-400 uppercase">Live</span>
+                <span class="text-[9px] font-bold text-zinc-400 uppercase leading-none">Online</span>
             </div>
         </div>
 
         <div id="loader" class="flex flex-col items-center py-16">
             <div class="w-10 h-10 border-2 border-zinc-800 border-t-green-500 rounded-full animate-spin"></div>
-            <p class="text-[11px] text-zinc-500 mt-4 font-medium tracking-widest uppercase">Acessando Database...</p>
+            <p class="text-[11px] text-zinc-500 mt-4 font-medium tracking-widest uppercase">Sincronizando Preços...</p>
         </div>
 
         <div id="content" class="hidden space-y-8 fade-in">
-            <div class="grid grid-cols-1 gap-4">
+            <div class="grid grid-cols-1 gap-5">
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Fabricante</label>
-                    <select id="marca" class="w-full p-4 rounded-2xl text-sm outline-none transition-all focus:border-green-500/50 hover:bg-zinc-800/50 cursor-pointer"></select>
+                    <select id="marca" class="w-full p-4 rounded-2xl text-sm outline-none transition-all focus:ring-2 focus:ring-green-500/20 hover:border-zinc-500"></select>
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Modelo do Dispositivo</label>
-                    <select id="modelo" class="w-full p-4 rounded-2xl text-sm outline-none transition-all focus:border-green-500/50 hover:bg-zinc-800/50 cursor-pointer"></select>
+                    <select id="modelo" class="w-full p-4 rounded-2xl text-sm outline-none transition-all focus:ring-2 focus:ring-green-500/20 hover:border-zinc-500"></select>
                 </div>
             </div>
 
             <div id="areaServicos" class="hidden space-y-4">
-                <div class="flex items-center gap-4">
-                    <span class="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] whitespace-nowrap">Manutenção</span>
-                    <div class="h-px w-full bg-zinc-800/50"></div>
+                <div class="flex items-center gap-4 px-1">
+                    <span class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] whitespace-nowrap">Selecione os Reparos</span>
+                    <div class="h-px w-full bg-zinc-800"></div>
                 </div>
                 <div id="gridServicos" class="grid gap-2.5 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
                     </div>
             </div>
 
             <div id="resumoCupom" class="hidden fade-in">
-                <div class="receipt p-6 rounded-lg shadow-inner">
+                <div class="receipt p-6 rounded-lg">
                     <div class="flex justify-between items-center mb-6 border-b border-zinc-800 border-dashed pb-4">
                         <div class="text-[10px] text-zinc-500 leading-relaxed">
-                            <p class="font-bold text-zinc-300">ORÇAMENTO #<span id="protocolo"></span></p>
-                            <p id="dataAtual"></p>
+                            <p class="font-bold text-zinc-300 uppercase">Orçamento: #<span id="protocolo"></span></p>
+                            <p>Data: <span id="dataAtual"></span></p>
+                            <p class="text-amber-500/80 font-bold">Válido por 3 dias</p>
                         </div>
-                        <i data-lucide="qr-code" class="w-8 h-8 text-zinc-700"></i>
+                        <i data-lucide="receipt" class="w-6 h-6 text-zinc-700"></i>
                     </div>
                     
                     <div id="listaItensCupom" class="space-y-2.5 text-[11px] mb-6">
                         </div>
 
-                    <div class="border-t border-zinc-800 border-dashed pt-5 mt-2">
+                    <div class="border-t border-zinc-800 border-dashed pt-5">
                         <div class="flex justify-between items-end">
-                            <span class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Valor Total Estimado</span>
-                            <div id="resultado" class="text-3xl font-black text-white tracking-tighter">R$ 0,00</div>
+                            <span class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Total Estimado</span>
+                            <div id="resultado" class="text-3xl font-black text-white tracking-tighter leading-none">R$ 0,00</div>
                         </div>
                     </div>
                 </div>
-                <p id="aviso" class="text-[10px] text-amber-500/70 mt-4 text-center italic font-medium hidden">
-                    *Preços podem variar conforme o estado interno do hardware.
+                <p id="aviso" class="text-[9px] text-amber-500/70 mt-5 text-center italic leading-tight hidden px-4">
+                    *Preços baseados em componentes padrão. Sujeito a alteração após perícia técnica.
                 </p>
             </div>
 
             <div class="pt-2">
                 <a href="#" id="btnZap" target="_blank" class="flex items-center justify-center gap-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-5 rounded-2xl transition-all shadow-xl shadow-green-900/20 active:scale-[0.97]">
-                    <i data-lucide="send" class="w-5 h-5"></i>
-                    Enviar para Técnico
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                    Enviar p/ WhatsApp
                 </a>
             </div>
 
             <div class="text-center">
-                <a href="index.html" class="text-[10px] text-zinc-600 hover:text-zinc-200 uppercase font-black tracking-[0.2em] transition-colors flex items-center justify-center gap-2">
-                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Voltar ao Menu
+                <a href="index.html" class="text-[10px] text-zinc-600 hover:text-green-500 uppercase font-black tracking-[0.2em] transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="chevron-left" class="w-3 h-3"></i> Voltar
                 </a>
             </div>
         </div>
@@ -178,8 +189,9 @@
         const URL_API = "https://script.google.com/macros/s/AKfycbzgqa8KNM38ngwq6_cVpnh-pzJWl5E2bGATkqUiPnbgsawgsxBDPWQ5lqmADaX4S07QVA/exec";
         const WHATSAPP_LOJA = "554197589418";
 
-        // Preencher dados automáticos
-        document.getElementById('dataAtual').innerText = new Date().toLocaleDateString('pt-BR');
+        // Info do Orçamento
+        const dataHoje = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('dataAtual').innerText = dataHoje;
         document.getElementById('protocolo').innerText = Math.floor(1000 + Math.random() * 9000);
 
         let tabelaDados = [];
@@ -194,7 +206,7 @@
 
                 const marcas = [...new Set(tabelaDados.map(l => l[0]))].filter(m => m);
                 const selMarca = document.getElementById('marca');
-                selMarca.innerHTML = "<option value=''>Selecione o Fabricante</option>" + 
+                selMarca.innerHTML = "<option value=''>Fabricante</option>" + 
                                      marcas.map(m => `<option value="${m}">${m}</option>`).join("");
 
                 selMarca.onchange = carregarModelos;
@@ -204,7 +216,7 @@
                 document.getElementById('content').classList.remove('hidden');
                 lucide.createIcons();
             } catch (e) {
-                document.getElementById('loader').innerHTML = "<p class='text-red-500 text-xs font-bold'>ERRO NA SINCRONIZAÇÃO</p>";
+                document.getElementById('loader').innerHTML = "<p class='text-red-500 text-xs font-bold'>ERRO DE CONEXÃO</p>";
             }
         }
 
@@ -212,7 +224,7 @@
             const m = document.getElementById('marca').value;
             const modelos = tabelaDados.filter(l => l[0] === m).map(l => l[1]);
             const selMod = document.getElementById('modelo');
-            selMod.innerHTML = "<option value=''>Modelo do Aparelho</option>" + 
+            selMod.innerHTML = "<option value=''>Modelo</option>" + 
                                modelos.map(mod => `<option value="${mod}">${mod}</option>`).join("");
             document.getElementById('areaServicos').classList.add('hidden');
             document.getElementById('resumoCupom').classList.add('hidden');
@@ -240,11 +252,11 @@
                 const valorTexto = isNaN(parseFloat(valorRaw)) ? valorRaw : "R$ " + parseFloat(valorRaw).toFixed(2).replace(".", ",");
                 
                 const card = document.createElement('label');
-                card.className = "flex items-center justify-between p-4 rounded-2xl cursor-pointer bg-zinc-900/50 border border-zinc-800 hover:border-zinc-600 transition-all group";
+                card.className = "flex items-center justify-between p-4 rounded-2xl cursor-pointer bg-zinc-900/50 border border-zinc-800 hover:border-green-500/30 transition-all group";
                 card.innerHTML = `
                     <div class="flex items-center gap-4">
                         <input type="checkbox" value="${valorRaw}" data-nome="${nome}" class="servico-cb">
-                        <span class="text-sm font-semibold text-zinc-400 group-hover:text-zinc-100 transition-colors">${nome}</span>
+                        <span class="text-sm font-semibold text-zinc-400 group-hover:text-zinc-100">${nome}</span>
                     </div>
                     <span class="text-[11px] font-black text-green-500/80">${valorTexto}</span>
                 `;
@@ -280,26 +292,29 @@
                 
                 const itemRow = document.createElement('div');
                 itemRow.className = "flex justify-between items-center text-zinc-400";
-                itemRow.innerHTML = `<span class="uppercase tracking-tighter">${nome}</span><span class="text-zinc-200 font-bold">${valorFormatado}</span>`;
+                itemRow.innerHTML = `<span class="uppercase tracking-tighter">${nome}</span><span class="text-zinc-100 font-bold">${valorFormatado}</span>`;
                 listaItens.appendChild(itemRow);
 
                 if (!isNaN(parseFloat(v))) soma += parseFloat(v);
                 else sobConsulta = true;
             });
 
-            if (sobConsulta) {
-                resDiv.innerText = "SOB CONSULTA";
-                resDiv.className = "text-xl font-black text-amber-500 tracking-tighter";
+            const totalFinal = sobConsulta ? "SOB CONSULTA" : soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            resDiv.innerText = totalFinal;
+            
+            if(sobConsulta) {
+                resDiv.className = "text-xl font-black text-amber-500 tracking-tighter leading-none";
                 aviso.classList.remove('hidden');
             } else {
-                resDiv.innerText = soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                resDiv.className = "text-3xl font-black text-white tracking-tighter";
+                resDiv.className = "text-3xl font-black text-white tracking-tighter leading-none";
                 aviso.classList.add('hidden');
             }
 
+            // Mensagem WhatsApp
             const mod = document.getElementById('modelo').value;
-            const listaNomes = selecionados.map(cb => cb.getAttribute('data-nome')).join(', ');
-            const msg = `*BRCELL - NOVO ORÇAMENTO*%0A%0A*Modelo:* ${mod}%0A*Protocolo:* ${document.getElementById('protocolo').innerText}%0A*Serviços:* ${listaNomes}%0A%0A*TOTAL ESTIMADO:* ${resDiv.innerText}`;
+            const listaNomes = selecionados.map(cb => `• ${cb.getAttribute('data-nome')}`).join('%0A');
+            const msg = `*BRCELL - ORÇAMENTO*%0A%0A*Modelo:* ${mod}%0A*Data:* ${dataHoje}%0A%0A*Serviços:*%0A${listaNomes}%0A%0A*TOTAL ESTIMADO:* ${totalFinal}%0A----------------------------%0A⚠️ _Validade: 3 dias úteis_`;
+            
             document.getElementById('btnZap').href = `https://wa.me/${WHATSAPP_LOJA}?text=${msg}`;
         }
 
