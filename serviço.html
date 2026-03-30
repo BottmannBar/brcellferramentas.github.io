@@ -1,80 +1,131 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BRCELL - Simulador de Serviços</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body { background-color: #09090b; color: #fafafa; font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(24, 24, 27, 0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
-        input, select { background-color: #18181b !important; border: 1px solid #27272a !important; color: white !important; }
-        .def-card { transition: all 0.2s; border: 1px solid #27272a; }
-        .def-card:has(input:checked) { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-    </style>
-</head>
+<style>
+    body { background-color: #09090b; color: #fafafa; font-family: 'Inter', sans-serif; }
+    .glass-card { background: rgba(24, 24, 27, 0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
+    input, select { background-color: #18181b !important; border: 1px solid #27272a !important; color: white !important; }
+    
+    .def-card { transition: all 0.2s; border: 1px solid #27272a; }
+    .def-card:has(input:checked) { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+    
+    /* Estilo Cupom de Maquininha */
+    .receipt-container {
+        background: #121214;
+        border: 1px dashed #27272a;
+        position: relative;
+        overflow: hidden;
+    }
+    .receipt-container::before, .receipt-container::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background-size: 8px 4px;
+        background-repeat: repeat-x;
+    }
+    .receipt-container::before {
+        top: 0;
+        background-image: linear-gradient(135deg, #09090b 25%, transparent 25%), linear-gradient(225deg, #09090b 25%, transparent 25%);
+    }
+    .receipt-container::after {
+        bottom: 0;
+        background-image: linear-gradient(45deg, #09090b 25%, transparent 25%), linear-gradient(-45deg, #09090b 25%, transparent 25%);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+</style>
+
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="max-w-md w-full glass-card rounded-2xl p-6 shadow-2xl">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="bg-green-500/20 p-2 rounded-lg">
-                <i data-lucide="wrench" class="text-green-500"></i>
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <div class="bg-green-500/20 p-2.5 rounded-xl">
+                    <i data-lucide="smartphone" class="text-green-500 w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-none">BRCELL</h1>
+                    <p class="text-[10px] text-zinc-500 uppercase tracking-[0.2em] font-black mt-1">Service Simulator</p>
+                </div>
             </div>
-            <div>
-                <h1 class="text-xl font-bold tracking-tight">Orçamento de Serviços</h1>
-                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Tabela de Preços BRCELL</p>
+            <div class="text-right">
+                <span class="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-400 border border-zinc-700">v2.0</span>
             </div>
         </div>
 
-        <div id="loader" class="flex flex-col items-center py-10">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-2"></div>
-            <p class="text-sm text-zinc-500 text-center">Sincronizando com a planilha de serviços...</p>
+        <div id="loader" class="flex flex-col items-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mb-4"></div>
+            <p class="text-xs text-zinc-500 font-medium italic">Sincronizando banco de dados...</p>
         </div>
 
-        <div id="content" class="hidden space-y-5">
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs font-medium mb-1.5 block text-zinc-400">Marca</label>
-                    <select id="marca" class="w-full p-3 rounded-xl text-sm outline-none transition-all focus:border-green-500"></select>
+        <div id="content" class="hidden space-y-6">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-zinc-500 uppercase ml-1">Marca</label>
+                    <select id="marca" class="w-full p-3 rounded-xl text-sm outline-none transition-all focus:ring-1 focus:ring-green-500/50"></select>
                 </div>
-                <div>
-                    <label class="text-xs font-medium mb-1.5 block text-zinc-400">Modelo</label>
-                    <select id="modelo" class="w-full p-3 rounded-xl text-sm outline-none transition-all focus:border-green-500"></select>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-zinc-500 uppercase ml-1">Modelo</label>
+                    <select id="modelo" class="w-full p-3 rounded-xl text-sm outline-none transition-all focus:ring-1 focus:ring-green-500/50"></select>
                 </div>
             </div>
 
-            <div id="areaServicos" class="hidden">
-                <label class="text-xs font-medium mb-3 block text-zinc-400 uppercase tracking-widest text-center">Selecione os Serviços</label>
-                <div class="grid grid-cols-1 gap-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar" id="gridServicos"></div>
+            <div id="areaServicos" class="hidden animate-in fade-in duration-500">
+                <div class="flex items-center gap-2 mb-3 px-1">
+                    <div class="h-px flex-1 bg-zinc-800"></div>
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Serviços Disponíveis</span>
+                    <div class="h-px flex-1 bg-zinc-800"></div>
+                </div>
+                <div class="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar" id="gridServicos"></div>
             </div>
 
-            <div class="bg-zinc-900/50 rounded-2xl p-6 border border-zinc-800 text-center shadow-inner">
-                <span class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Valor Total do Orçamento</span>
-                <div id="resultado" class="text-4xl font-black text-white mt-1 transition-all">R$ 0,00</div>
-                <div id="aviso" class="text-amber-500 text-[10px] mt-2 hidden italic">⚠️ Valor sujeito a análise técnica presencial</div>
+            <div id="resumoCupom" class="hidden animate-in slide-in-from-bottom-2 duration-300">
+                <div class="receipt-container p-5 rounded-sm">
+                    <div class="flex justify-between items-start mb-4 border-b border-zinc-800 border-dashed pb-3">
+                        <div class="text-[10px] font-mono text-zinc-500">
+                            <p>RESUMO DO ORÇAMENTO</p>
+                            <p id="dataAtual"></p>
+                        </div>
+                        <i data-lucide="receipt" class="w-4 h-4 text-zinc-600"></i>
+                    </div>
+                    
+                    <div id="listaItensCupom" class="space-y-2 font-mono text-xs mb-4">
+                        </div>
+
+                    <div class="border-t border-zinc-800 border-dashed pt-3">
+                        <div class="flex justify-between items-end">
+                            <span class="text-[10px] font-mono text-zinc-500 uppercase">Total Estimado</span>
+                            <div id="resultado" class="text-2xl font-black text-white leading-none">R$ 0,00</div>
+                        </div>
+                        <p id="aviso" class="text-[9px] text-amber-500/80 mt-2 italic hidden text-center leading-tight">
+                            *Valores base sujeitos a confirmação após abertura do aparelho.
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <a href="#" id="btnZap" target="_blank" class="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-900/20">
+            <a href="#" id="btnZap" target="_blank" class="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-900/40 active:scale-[0.98]">
                 <i data-lucide="message-square" class="w-5 h-5"></i>
-                Enviar Orçamento via Whats
+                Confirmar via WhatsApp
             </a>
 
-            <div class="text-center pt-2">
-                <a href="index.html" class="text-[11px] text-zinc-500 hover:text-green-500 uppercase font-bold tracking-tighter transition-colors">← Voltar para Avaliação</a>
+            <div class="text-center">
+                <a href="index.html" class="text-[10px] text-zinc-600 hover:text-green-500 uppercase font-black tracking-widest transition-colors flex items-center justify-center gap-1">
+                    <i data-lucide="chevron-left" class="w-3 h-3"></i> Voltar para Avaliação
+                </a>
             </div>
         </div>
     </div>
 
     <script>
-        // LINK DA API QUE VOCÊ MANDOU
         const URL_API = "https://script.google.com/macros/s/AKfycbzgqa8KNM38ngwq6_cVpnh-pzJWl5E2bGATkqUiPnbgsawgsxBDPWQ5lqmADaX4S07QVA/exec";
-        const WHATSAPP_LOJA = "554197589418"; // Coloque o seu número aqui
+        const WHATSAPP_LOJA = "554197589418";
 
         let tabelaDados = [];
         let cabecalhos = [];
+
+        // Data atual para o cupom
+        document.getElementById('dataAtual').innerText = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
 
         async function carregarDados() {
             try {
@@ -85,7 +136,7 @@
 
                 const marcas = [...new Set(tabelaDados.map(l => l[0]))].filter(m => m);
                 const selMarca = document.getElementById('marca');
-                selMarca.innerHTML = "<option value=''>Selecione a marca</option>" + 
+                selMarca.innerHTML = "<option value=''>Marca</option>" + 
                                      marcas.map(m => `<option value="${m}">${m}</option>`).join("");
 
                 selMarca.onchange = carregarModelos;
@@ -95,7 +146,7 @@
                 document.getElementById('content').classList.remove('hidden');
                 lucide.createIcons();
             } catch (e) {
-                document.getElementById('loader').innerHTML = "<p class='text-red-500'>Erro ao carregar dados da planilha.</p>";
+                document.getElementById('loader').innerHTML = "<p class='text-red-500 text-xs text-center font-bold'>ERRO DE CONEXÃO<br><span class='font-normal opacity-50 text-[10px]'>Verifique sua planilha</span></p>";
             }
         }
 
@@ -103,10 +154,10 @@
             const m = document.getElementById('marca').value;
             const modelos = tabelaDados.filter(l => l[0] === m).map(l => l[1]);
             const selMod = document.getElementById('modelo');
-            selMod.innerHTML = "<option value=''>Selecione o modelo</option>" + 
+            selMod.innerHTML = "<option value=''>Modelo</option>" + 
                                modelos.map(mod => `<option value="${mod}">${mod}</option>`).join("");
             document.getElementById('areaServicos').classList.add('hidden');
-            document.getElementById('resultado').innerText = "R$ 0,00";
+            document.getElementById('resumoCupom').classList.add('hidden');
         }
 
         function montarServicos() {
@@ -117,6 +168,7 @@
 
             if(!mod) {
                 document.getElementById('areaServicos').classList.add('hidden');
+                document.getElementById('resumoCupom').classList.add('hidden');
                 return;
             }
 
@@ -134,18 +186,28 @@
                 const valorTexto = isNaN(parseFloat(valorRaw)) ? valorRaw : "R$ " + parseFloat(valorRaw).toFixed(2).replace(".", ",");
                 
                 const card = document.createElement('label');
-                card.className = "def-card flex items-center justify-between p-3 rounded-xl cursor-pointer bg-zinc-900/40 hover:bg-zinc-800 transition-colors";
+                card.className = "def-card flex items-center justify-between p-3 rounded-xl cursor-pointer bg-zinc-900/40 hover:bg-zinc-800 transition-colors group";
                 card.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <input type="checkbox" value="${valorRaw}" data-nome="${nome}" class="servico-cb w-4 h-4 accent-green-500">
-                        <span class="text-sm font-medium text-zinc-300">${nome}</span>
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" value="${valorRaw}" data-nome="${nome}" class="servico-cb appearance-none w-5 h-5 border-2 border-zinc-700 rounded-md checked:bg-green-500 checked:border-green-500 transition-all cursor-pointer">
+                            <i data-lucide="check" class="absolute text-white w-3.5 h-3.5 pointer-events-none opacity-0 transition-opacity"></i>
+                        </div>
+                        <span class="text-sm font-medium text-zinc-400 group-hover:text-zinc-200">${nome}</span>
                     </div>
                     <span class="text-xs font-bold text-green-500/80">${valorTexto}</span>
                 `;
                 grid.appendChild(card);
             });
 
-            document.querySelectorAll('.servico-cb').forEach(cb => cb.onchange = atualizarSoma);
+            document.querySelectorAll('.servico-cb').forEach(cb => {
+                cb.onchange = (e) => {
+                    const checkIcon = e.target.nextElementSibling;
+                    checkIcon.style.opacity = e.target.checked ? "1" : "0";
+                    atualizarSoma();
+                };
+            });
+            lucide.createIcons();
             atualizarSoma();
         }
 
@@ -153,20 +215,31 @@
             const selecionados = [...document.querySelectorAll('.servico-cb:checked')];
             const resDiv = document.getElementById('resultado');
             const aviso = document.getElementById('aviso');
+            const cupomDiv = document.getElementById('resumoCupom');
+            const listaItens = document.getElementById('listaItensCupom');
             
             if (selecionados.length === 0) {
+                cupomDiv.classList.add('hidden');
                 resDiv.innerText = "R$ 0,00";
-                aviso.classList.add('hidden');
                 return;
             }
 
+            cupomDiv.classList.remove('hidden');
+            listaItens.innerHTML = "";
             let soma = 0;
             let sobConsulta = false;
-            let listaServicos = [];
 
             selecionados.forEach(cb => {
                 const v = cb.value;
-                listaServicos.push(cb.getAttribute('data-nome'));
+                const nome = cb.getAttribute('data-nome');
+                const valorFormatado = isNaN(parseFloat(v)) ? "A Consultar" : "R$ " + parseFloat(v).toFixed(2).replace(".", ",");
+                
+                // Adiciona item no cupom
+                const itemRow = document.createElement('div');
+                itemRow.className = "flex justify-between text-zinc-400 border-b border-zinc-800/50 pb-1";
+                itemRow.innerHTML = `<span>${nome}</span><span>${valorFormatado}</span>`;
+                listaItens.appendChild(itemRow);
+
                 if (!isNaN(parseFloat(v)) && v !== "") {
                     soma += parseFloat(v);
                 } else {
@@ -176,20 +249,20 @@
 
             if (sobConsulta) {
                 resDiv.innerText = "Sob Consulta";
-                resDiv.classList.add('text-amber-500');
+                resDiv.classList.replace('text-white', 'text-amber-500');
                 aviso.classList.remove('hidden');
             } else {
                 resDiv.innerText = soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                resDiv.classList.remove('text-amber-500');
+                resDiv.classList.replace('text-amber-500', 'text-white');
                 aviso.classList.add('hidden');
             }
 
             const mod = document.getElementById('modelo').value;
-            const msg = `Orçamento BRCELL:%0A*Modelo:* ${mod}%0A*Serviços:* ${listaServicos.join(', ')}%0A*Total:* ${resDiv.innerText}`;
+            const listaNomes = selecionados.map(cb => cb.getAttribute('data-nome')).join(', ');
+            const msg = `Orçamento BRCELL:%0A*Modelo:* ${mod}%0A*Serviços:* ${listaNomes}%0A*Total:* ${resDiv.innerText}`;
             document.getElementById('btnZap').href = `https://wa.me/${WHATSAPP_LOJA}?text=${msg}`;
         }
 
         carregarDados();
     </script>
 </body>
-</html>
