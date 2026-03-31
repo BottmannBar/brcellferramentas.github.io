@@ -1,3 +1,8 @@
+Para integrar a lógica da **Fábrica de PDFs** e a organização de pastas para o **AppSheet** (incluindo a substituição de arquivos antigos) no seu código, atualizei o HTML para enviar os dados corretamente.
+
+Aqui está o código completo. Note que a `URL_API` já está com o link que você forneceu no código anterior.
+
+```html
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -22,6 +27,8 @@
     <div class="max-w-2xl mx-auto glass-card rounded-2xl p-6 mb-10 shadow-2xl">
 
         <form id="formEntrada" class="space-y-6">
+            <input type="hidden" id="protocolo_existente" value="">
+
             <div class="flex items-center justify-between mb-8">
                 <div class="flex items-center gap-3">
                     <div class="bg-green-500/20 p-3 rounded-xl"><i data-lucide="file-text" class="text-green-500"></i></div>
@@ -98,9 +105,9 @@
             <div class="bg-green-500/20 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <i data-lucide="check" class="text-green-500 w-10 h-10"></i>
             </div>
-            <h2 class="text-2xl font-bold mb-2">OS Gerada com Sucesso!</h2>
+            <h2 class="text-2xl font-bold mb-2">Finalizado com Sucesso!</h2>
             <p class="text-zinc-400 mb-6 font-bold uppercase text-[10px]">BR CELULARES LTDA | Curitiba-PR</p>
-            <p class="text-zinc-500 mb-6 text-sm">O PDF com os termos contratuais foi salvo no Drive e registrado na planilha.</p>
+            <p class="text-zinc-500 mb-6 text-sm">O documento foi gerado e as fotos foram organizadas na pasta do Drive.</p>
             <button onclick="location.reload()" class="bg-zinc-800 p-4 rounded-xl w-full font-bold uppercase text-xs tracking-widest">Nova Entrada</button>
         </div>
     </div>
@@ -108,6 +115,7 @@
     <script>
         const canvas = document.getElementById("signature-pad");
         const pad = new SignaturePad(canvas);
+        // URL da Fábrica de PDFs
         const URL_API = "https://script.google.com/macros/s/AKfycbysZlG09FM1kWJLoeCz1CimDx0YG17Rge0IoYM6x1T6vf7O45EtNYhOvH2abiKpjI8h/exec";
 
         document.getElementById('data_entrada').valueAsDate = new Date();
@@ -144,17 +152,17 @@
             if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
 
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "Sincronizando no Drive..."; btn.disabled = true;
+            btn.innerText = "Processando Documento..."; btn.disabled = true;
 
             const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
 
+            // Gerar protocolo se não existir (Entrada nova)
+            const agora = new Date();
+            const protocoloGerado = agora.getFullYear().toString() + (agora.getMonth() + 1).toString().padStart(2, '0') + agora.getDate().toString().padStart(2, '0') + agora.getHours().toString().padStart(2, '0') + agora.getMinutes().toString().padStart(2, '0');
+            const protocoloFinal = document.getElementById('protocolo_existente').value || protocoloGerado;
+
             const payload = {
-                // Dados fiscais da empresa para o motor do PDF
-                empresa_nome: "BR CELULARES LTDA",
-                empresa_cnpj: "42.206.278/0001-60",
-                empresa_end: "RUA RIACHUELO, 90, CONJ 04, CENTRO, Curitiba - PR, 80.020-250",
-                empresa_tel: "9109582759",
-                
+                protocolo: protocoloFinal,
                 data: document.getElementById('data_entrada').value.split('-').reverse().join('/'),
                 nome: document.getElementById('nome').value,
                 telefone: document.getElementById('telefone').value,
@@ -173,11 +181,16 @@
                 assinatura: pad.toDataURL()
             };
 
+            // Envia para a Fábrica (Apps Script)
             fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
             .then(() => { 
                 document.getElementById('formEntrada').classList.add('hidden');
                 document.getElementById('sucessoMsg').classList.remove('hidden');
                 lucide.createIcons();
+            })
+            .catch(err => {
+                alert("Erro ao salvar: " + err);
+                btn.innerText = "Tentar Novamente"; btn.disabled = false;
             });
         };
 
@@ -193,3 +206,4 @@
     </script>
 </body>
 </html>
+```
