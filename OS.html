@@ -110,8 +110,9 @@
     <script>
         const canvas = document.getElementById("signature-pad");
         const pad = new SignaturePad(canvas);
-        // URL da Fábrica de PDFs
-        const URL_API = "https://script.google.com/macros/s/AKfycbyD-CXfN4hK3pm65G6XP-xGlFWDJrNDToXjlmfAKqS_OOml6lv5zciQMuRl3U55gWIn/exec";
+        
+        // URL ATUALIZADA PARA O SCRIPT PRINCIPAL (UNIFICADO)
+        const URL_API = "https://script.google.com/macros/s/AKfycbxtU5YWLt5gIlFAMhhNNrmibTDNCEwS4CZVrIuWdlm-bDlQOss9DlrsUV0ypQ5SDZCe/exec";
 
         document.getElementById('data_entrada').valueAsDate = new Date();
 
@@ -151,7 +152,6 @@
 
             const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
 
-            // Gerar protocolo se não existir (Entrada nova)
             const agora = new Date();
             const protocoloGerado = agora.getFullYear().toString() + (agora.getMonth() + 1).toString().padStart(2, '0') + agora.getDate().toString().padStart(2, '0') + agora.getHours().toString().padStart(2, '0') + agora.getMinutes().toString().padStart(2, '0');
             const protocoloFinal = document.getElementById('protocolo_existente').value || protocoloGerado;
@@ -176,7 +176,6 @@
                 assinatura: pad.toDataURL()
             };
 
-            // Envia para a Fábrica (Apps Script)
             fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
             .then(() => { 
                 document.getElementById('formEntrada').classList.add('hidden');
@@ -201,4 +200,3 @@
     </script>
 </body>
 </html>
-```
