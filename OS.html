@@ -1,8 +1,3 @@
-Para integrar a lógica da **Fábrica de PDFs** e a organização de pastas para o **AppSheet** (incluindo a substituição de arquivos antigos) no seu código, atualizei o HTML para enviar os dados corretamente.
-
-Aqui está o código completo. Note que a `URL_API` já está com o link que você forneceu no código anterior.
-
-```html
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -116,7 +111,7 @@ Aqui está o código completo. Note que a `URL_API` já está com o link que voc
         const canvas = document.getElementById("signature-pad");
         const pad = new SignaturePad(canvas);
         // URL da Fábrica de PDFs
-        const URL_API = "https://script.google.com/macros/s/AKfycbysZlG09FM1kWJLoeCz1CimDx0YG17Rge0IoYM6x1T6vf7O45EtNYhOvH2abiKpjI8h/exec";
+        const URL_API = "https://script.google.com/macros/s/AKfycbyD-CXfN4hK3pm65G6XP-xGlFWDJrNDToXjlmfAKqS_OOml6lv5zciQMuRl3U55gWIn/exec";
 
         document.getElementById('data_entrada').valueAsDate = new Date();
 
