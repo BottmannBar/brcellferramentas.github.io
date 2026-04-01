@@ -15,7 +15,9 @@
         .check-btn { border: 1px solid #27272a; transition: all 0.2s; cursor: pointer; }
         .check-btn:has(input:checked) { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); color: #22c55e; }
         canvas { background: #fff; border-radius: 8px; cursor: crosshair; }
-        
+        #comprovante { display: none; }
+
+        /* ESTILO DO LOADING */
         #loadingOverlay {
             display: none;
             position: fixed;
@@ -127,6 +129,7 @@
             </div>
             <h2 class="text-2xl font-bold mb-2">Finalizado com Sucesso!</h2>
             <p class="text-zinc-400 mb-6 font-bold uppercase text-[10px]">BR CELULARES LTDA | Curitiba-PR</p>
+            <p id="msgRetorno" class="text-zinc-500 mb-6 text-sm">O documento foi gerado e as fotos foram organizadas na pasta do Drive.</p>
             <button onclick="location.reload()" class="bg-zinc-800 p-4 rounded-xl w-full font-bold uppercase text-xs tracking-widest">Nova Entrada</button>
         </div>
     </div>
@@ -135,9 +138,7 @@
         const canvas = document.getElementById("signature-pad");
         const pad = new SignaturePad(canvas);
         const loading = document.getElementById('loadingOverlay');
-        
-        // URL DA API (Limpamos os parâmetros extras para evitar erros de fetch)
-        const URL_API = "https://script.google.com/macros/s/AKfycbzthMfuAeZxe9Paj5PZT_Twqf1jOOQnFsPjvwenTDnqlNhpVlkVHNnhI0a0dcRs582q/exec";
+        const URL_API = "https://script.google.com/macros/s/AKfycbwbpczQz13jJWpseYh9uNxSp563U1CEAvXd91dkfV59o7zDnuvsaJQO1XaNXZNN6kcf/exec";
 
         document.getElementById('data_entrada').valueAsDate = new Date();
 
@@ -146,17 +147,16 @@
             const editProtocolo = urlParams.get('edit');
 
             if (editProtocolo) {
-                loading.style.display = 'flex';
+                loading.style.display = 'flex'; // ATIVA LOADING NA BUSCA
                 document.getElementById('labelAcao').innerText = "Editando OS: " + editProtocolo;
-                document.getElementById('btnEnviar').innerHTML = '<i data-lucide="refresh-cw"></i> Atualizar OS';
+                document.getElementById('btnEnviar').innerHTML = '<i data-lucide="refresh-cw"></i> Atualizar OS e Sincronizar';
                 document.getElementById('btnEnviar').classList.replace('bg-green-600', 'bg-blue-600');
                 document.getElementById('protocolo_existente').value = editProtocolo;
 
                 try {
-                    // Busca dados garantindo que a URL esteja correta
                     const res = await fetch(`${URL_API}?edit=${editProtocolo}`);
                     const d = await res.json();
-                    
+
                     if (d.status === "sucesso") {
                         document.getElementById('nome').value = d.nome || "";
                         document.getElementById('telefone').value = d.telefone || "";
@@ -174,10 +174,8 @@
                         document.getElementById('problema').value = d.problema || "";
                         document.getElementById('valor_servico').value = d.valor || "";
                     }
-                } catch (e) { 
-                    console.log("Erro ao carregar dados", e); 
-                }
-                loading.style.display = 'none';
+                } catch (e) { console.log("Erro ao carregar dados"); }
+                loading.style.display = 'none'; // DESATIVA LOADING APÓS BUSCA
             }
             lucide.createIcons();
         };
@@ -213,7 +211,7 @@
             e.preventDefault();
             if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
             
-            loading.style.display = 'flex';
+            loading.style.display = 'flex'; // ATIVA LOADING NO ENVIO
             const btn = document.getElementById('btnEnviar');
             btn.disabled = true;
 
@@ -244,7 +242,7 @@
 
             fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
             .then(() => { 
-                loading.style.display = 'none';
+                loading.style.display = 'none'; // DESATIVA LOADING AO FINALIZAR
                 document.getElementById('formEntrada').classList.add('hidden');
                 document.getElementById('sucessoMsg').classList.remove('hidden');
                 lucide.createIcons();
@@ -267,4 +265,4 @@
         lucide.createIcons();
     </script>
 </body>
-</html>
+</html> 
