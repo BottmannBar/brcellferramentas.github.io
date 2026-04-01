@@ -178,6 +178,9 @@
 
             fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
             .then(() => { 
+                // DISPARO DO PDF (CHAMA O SCRIPT DE APOIO LOGO APÓS SALVAR)
+                fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ protocolo: payload.protocolo }) });
+
                 document.getElementById('formEntrada').classList.add('hidden');
                 document.getElementById('sucessoMsg').classList.remove('hidden');
                 lucide.createIcons();
