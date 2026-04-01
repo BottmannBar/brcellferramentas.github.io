@@ -136,8 +136,8 @@
         const pad = new SignaturePad(canvas);
         const loading = document.getElementById('loadingOverlay');
         
-        // URL ATUALIZADA DO NOVO SCRIPT COM QUEBRADOR DE CACHE (?v=1)
-        const URL_API = "https://script.google.com/macros/s/AKfycbzthMfuAeZxe9Paj5PZT_Twqf1jOOQnFsPjvwenTDnqlNhpVlkVHNnhI0a0dcRs582q/exec?v=1";
+        // URL DA API (Limpamos os parâmetros extras para evitar erros de fetch)
+        const URL_API = "https://script.google.com/macros/s/AKfycbzthMfuAeZxe9Paj5PZT_Twqf1jOOQnFsPjvwenTDnqlNhpVlkVHNnhI0a0dcRs582q/exec";
 
         document.getElementById('data_entrada').valueAsDate = new Date();
 
@@ -153,8 +153,10 @@
                 document.getElementById('protocolo_existente').value = editProtocolo;
 
                 try {
-                    const res = await fetch(`${URL_API}&edit=${editProtocolo}`);
+                    // Busca dados garantindo que a URL esteja correta
+                    const res = await fetch(`${URL_API}?edit=${editProtocolo}`);
                     const d = await res.json();
+                    
                     if (d.status === "sucesso") {
                         document.getElementById('nome').value = d.nome || "";
                         document.getElementById('telefone').value = d.telefone || "";
@@ -172,7 +174,9 @@
                         document.getElementById('problema').value = d.problema || "";
                         document.getElementById('valor_servico').value = d.valor || "";
                     }
-                } catch (e) { console.log("Erro ao carregar dados"); }
+                } catch (e) { 
+                    console.log("Erro ao carregar dados", e); 
+                }
                 loading.style.display = 'none';
             }
             lucide.createIcons();
