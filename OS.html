@@ -1,31 +1,27 @@
+
 // CONFIGURAÇÕES BRCELL
 const SS_ID = "1TQxj2Ku3VSHHfu0TXR35gFCszWAU0Hc3slXoyj5KgHc"; 
 const FOLDER_FOTOS_ID = "1VzF1J1otYkGCxNnQ0YLM_flFms4Zgq-O"; 
 const FOLDER_PDF_ID   = "1mH8uFxLKWG0j8enfwGCC7N_jQJRAf5Ly";
 const NOME_ABA = "Serv"; 
-
 /**
- * FUNÇÃO DE CONSULTA (GET) - Preenche o formulário ao abrir
+ * FUNÇÃO DE CONSULTA (PAINEL DE EDIÇÃO)
  */
 function doGet(e) {
   try {
-    let idBusca = e.parameter.protocolo || e.parameter.edit || e.parameter.ID_Comanda; 
-    if (!idBusca) return gerarRespostaJson({status: "erro", msg: "ID não enviado"});
-
-    // Normaliza o ID para busca (remove caracteres não numéricos)
-    const idLimpoBusca = idBusca.toString().replace(/\D/g, "");
-
+    // Busca por qualquer um dos nomes que venham na URL
+    const idBusca = e.parameter.protocolo || e.parameter.edit || e.parameter.ID_Comanda; 
+    
+    if (!idBusca) return gerarRespostaJson({status: "erro", msg: "ID_Comanda não enviado"});
     const ss = SpreadsheetApp.openById(SS_ID);
     const sheet = ss.getSheetByName(NOME_ABA);
     const rows = sheet.getDataRange().getValues();
-
+    // Varre a Coluna A (onde está o seu ID_Comanda)
     for (let i = 0; i < rows.length; i++) {
-      let idPlanilha = rows[i][0].toString().replace(/\D/g, "");
-      
-      if (idPlanilha === idLimpoBusca) {
+      if (rows[i][0].toString() === idBusca.toString()) {
         const dados = {
           status: "sucesso",
-          id: rows[i][0],
+          id: rows[i][0], // ID_Comanda
           data: rows[i][1],
           nome: rows[i][2],
           telefone: rows[i][3],
@@ -43,51 +39,43 @@ function doGet(e) {
         return gerarRespostaJson(dados);
       }
     }
-    return gerarRespostaJson({status: "erro", msg: "Comanda não encontrada"});
+    return gerarRespostaJson({status: "erro", msg: "Comanda " + idBusca + " não encontrada"});
   } catch (err) {
     return gerarRespostaJson({status: "erro", msg: err.message});
   }
 }
-
 /**
- * FUNÇÃO DE GRAVAÇÃO (POST) - Salva dados, fotos e PDF
+ * FUNÇÃO DE GRAVAÇÃO E ATUALIZAÇÃO
  */
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    // No seu HTML o campo ainda se chama 'protocolo', o que está OK, 
+    // o importante é que ele grave na coluna de ID_Comanda.
     const idComanda = data.protocolo || data.ID_Comanda;
-
-    if (!idComanda) return gerarRespostaJson({status: "erro", msg: "ID ausente"});
-
+    if (!idComanda) return gerarRespostaJson({status: "erro", msg: "ID_Comanda ausente"});
     const ss = SpreadsheetApp.openById(SS_ID);
     const sheet = ss.getSheetByName(NOME_ABA);
+    
     SpreadsheetApp.flush(); 
-
     const idsNaPlanilha = sheet.getRange("A:A").getValues();
-    const idLimpoNovo = idComanda.toString().replace(/\D/g, "");
     let linhaEncontrada = -1;
-
     for (let i = 0; i < idsNaPlanilha.length; i++) {
-      if (idsNaPlanilha[i][0].toString().replace(/\D/g, "") === idLimpoNovo) {
+      if (idsNaPlanilha[i][0].toString() == idComanda.toString()) {
         linhaEncontrada = i + 1;
         break;
       }
     }
-
     let linhaAtual = (linhaEncontrada !== -1) ? sheet.getRange(linhaEncontrada, 1, 1, 18).getValues()[0] : [];
-    
-    // Só gera novo PDF se houver dados básicos, senão mantém o link antigo
     const urlPdf = (data.nome || data.aparelho) ? criarPdfOS(data, idComanda) : (linhaAtual[17] || "");
     
     const pastaAppSheet = "Fotos/";
     const nomeFrente = `${pastaAppSheet}${idComanda}_frente.jpg`;
     const nomeVerso = `${pastaAppSheet}${idComanda}_verso.jpg`;
     const nomeAssinatura = `${pastaAppSheet}${idComanda}_assinatura.png`;
-
     if (data.fotoFrente) salvarNoDrive(data.fotoFrente, nomeFrente, FOLDER_FOTOS_ID);
     if (data.fotoVerso) salvarNoDrive(data.fotoVerso, nomeVerso, FOLDER_FOTOS_ID);
     if (data.assinatura) salvarNoDrive(data.assinatura, nomeAssinatura, FOLDER_FOTOS_ID);
-
     const linhaDados = [
       idComanda, 
       data.data || linhaAtual[1], 
@@ -103,32 +91,30 @@ function doPost(e) {
       data.problema || linhaAtual[11], 
       data.valor || linhaAtual[12], 
       data.checklist || linhaAtual[13], 
-      nomeFrente, nomeVerso, nomeAssinatura, urlPdf
+      nomeFrente, 
+      nomeVerso, 
+      nomeAssinatura, 
+      urlPdf
     ];
-
     if (linhaEncontrada !== -1) {
       sheet.getRange(linhaEncontrada, 1, 1, linhaDados.length).setValues([linhaDados]);
     } else {
       sheet.appendRow(linhaDados);
     }
-
     return gerarRespostaJson({"status": "sucesso", "pdf": urlPdf});
-
   } catch (err) {
     return gerarRespostaJson({"status": "erro", "msg": err.message});
   }
 }
-
+// --- MANTENHA AS FUNÇÕES criarPdfOS, salvarNoDrive e gerarRespostaJson ABAIXO IGUAIS ---
 function gerarRespostaJson(objeto) {
   return ContentService.createTextOutput(JSON.stringify(objeto)).setMimeType(ContentService.MimeType.JSON);
 }
-
 function criarPdfOS(dados, os) {
   const pastaPDF = DriveApp.getFolderById(FOLDER_PDF_ID);
   const nomeArquivoPDF = "OS_" + os + ".pdf";
   const arquivosExistentes = pastaPDF.getFilesByName(nomeArquivoPDF);
   while (arquivosExistentes.hasNext()) { arquivosExistentes.next().setTrashed(true); }
-  
   const html = `<div style="font-family: Arial; padding: 20px; border: 1px solid #000;">
     <h2 style="text-align:center;">BRCELL - ID ${os}</h2>
     <p><strong>Cliente:</strong> ${dados.nome || "Não informado"}</p>
@@ -136,13 +122,11 @@ function criarPdfOS(dados, os) {
     <p><strong>Valor:</strong> ${dados.valor || "R$ 0,00"}</p>
     ${dados.assinatura ? `<div style="text-align:center;"><img src="${dados.assinatura}" width="200"></div>` : ""}
   </div>`;
-  
   const blob = Utilities.newBlob(html, "text/html", "temp.html");
   const pdf = pastaPDF.createFile(blob.getAs("application/pdf")).setName(nomeArquivoPDF);
   pdf.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   return pdf.getUrl();
 }
-
 function salvarNoDrive(base64, caminhoCompleto, folderId) {
   if (!base64 || base64.length < 10) return;
   const nomeArquivo = caminhoCompleto.split('/').pop();
