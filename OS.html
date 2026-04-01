@@ -29,7 +29,7 @@
                     <div class="bg-green-500/20 p-3 rounded-xl"><i data-lucide="file-text" class="text-green-500"></i></div>
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight text-white">BRCELL</h1>
-                        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Entrada de Serviço</p>
+                        <p id="labelAcao" class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Entrada de Serviço</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -102,7 +102,7 @@
             </div>
             <h2 class="text-2xl font-bold mb-2">Finalizado com Sucesso!</h2>
             <p class="text-zinc-400 mb-6 font-bold uppercase text-[10px]">BR CELULARES LTDA | Curitiba-PR</p>
-            <p class="text-zinc-500 mb-6 text-sm">O documento foi gerado e as fotos foram organizadas na pasta do Drive.</p>
+            <p id="msgRetorno" class="text-zinc-500 mb-6 text-sm">O documento foi gerado e as fotos foram organizadas na pasta do Drive.</p>
             <button onclick="location.reload()" class="bg-zinc-800 p-4 rounded-xl w-full font-bold uppercase text-xs tracking-widest">Nova Entrada</button>
         </div>
     </div>
@@ -110,11 +110,43 @@
     <script>
         const canvas = document.getElementById("signature-pad");
         const pad = new SignaturePad(canvas);
-        
-        // URL ATUALIZADA PARA O SCRIPT PRINCIPAL (UNIFICADO)
         const URL_API = "https://script.google.com/macros/s/AKfycbyet67nzspf-6IOD8vuWh4x2TM8qb95vPeDZBtl3b_eTEH8z_BEQKyjB6n5slK7fxll/exec";
 
         document.getElementById('data_entrada').valueAsDate = new Date();
+
+        // --- FUNÇÃO PARA CARREGAR DADOS NA EDIÇÃO ---
+        window.onload = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const editProtocolo = urlParams.get('edit');
+
+            if (editProtocolo) {
+                document.getElementById('labelAcao').innerText = "Editando OS: " + editProtocolo;
+                document.getElementById('btnEnviar').innerHTML = '<i data-lucide="refresh-cw"></i> Atualizar OS e Sincronizar';
+                document.getElementById('btnEnviar').classList.replace('bg-green-600', 'bg-blue-600');
+                document.getElementById('protocolo_existente').value = editProtocolo;
+
+                try {
+                    const res = await fetch(`${URL_API}?protocolo=${editProtocolo}`);
+                    const d = await res.json();
+
+                    if (d.status === "sucesso") {
+                        document.getElementById('nome').value = d.nome;
+                        document.getElementById('telefone').value = d.telefone;
+                        document.getElementById('cpf').value = d.cpf;
+                        document.getElementById('cep').value = d.cep;
+                        document.getElementById('rua').value = d.endereco.split(',')[0] || "";
+                        document.getElementById('numero').value = d.endereco.split(',')[1]?.trim() || "";
+                        document.getElementById('bairro').value = d.bairro;
+                        document.getElementById('municipio_uf').value = d.municipio;
+                        document.getElementById('aparelho').value = d.aparelho;
+                        document.getElementById('senha').value = d.senha;
+                        document.getElementById('problema').value = d.problema;
+                        document.getElementById('valor_servico').value = d.valor;
+                    }
+                } catch (e) { console.log("Erro ao carregar OS para edição"); }
+            }
+            lucide.createIcons();
+        };
 
         function maskTel(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2").substring(0, 15); }
         function maskCPF(v) { v.value = v.value.replace(/\D/g, "").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2").substring(0, 14); }
@@ -148,7 +180,7 @@
             if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
 
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "Processando Documento..."; btn.disabled = true;
+            btn.innerText = "Processando Alterações..."; btn.disabled = true;
 
             const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
 
@@ -178,10 +210,8 @@
 
             fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
             .then(() => { 
-                // DISPARO DO PDF (CHAMA O SCRIPT DE APOIO LOGO APÓS SALVAR)
-                fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ protocolo: payload.protocolo }) });
-
                 document.getElementById('formEntrada').classList.add('hidden');
+                document.getElementById('msgRetorno').innerText = "A Ordem de Serviço foi atualizada e os documentos regerados com sucesso.";
                 document.getElementById('sucessoMsg').classList.remove('hidden');
                 lucide.createIcons();
             })
