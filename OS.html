@@ -114,7 +114,6 @@
 
         document.getElementById('data_entrada').valueAsDate = new Date();
 
-        // --- FUNÇÃO PARA CARREGAR DADOS NA EDIÇÃO ---
         window.onload = async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const editProtocolo = urlParams.get('edit');
@@ -126,24 +125,28 @@
                 document.getElementById('protocolo_existente').value = editProtocolo;
 
                 try {
-                    const res = await fetch(`${URL_API}?protocolo=${editProtocolo}`);
+                    // Chamada usando o parâmetro 'edit' que o GS já entende
+                    const res = await fetch(`${URL_API}?edit=${editProtocolo}`);
                     const d = await res.json();
 
                     if (d.status === "sucesso") {
-                        document.getElementById('nome').value = d.nome;
-                        document.getElementById('telefone').value = d.telefone;
-                        document.getElementById('cpf').value = d.cpf;
-                        document.getElementById('cep').value = d.cep;
-                        document.getElementById('rua').value = d.endereco.split(',')[0] || "";
-                        document.getElementById('numero').value = d.endereco.split(',')[1]?.trim() || "";
-                        document.getElementById('bairro').value = d.bairro;
-                        document.getElementById('municipio_uf').value = d.municipio;
-                        document.getElementById('aparelho').value = d.aparelho;
-                        document.getElementById('senha').value = d.senha;
-                        document.getElementById('problema').value = d.problema;
-                        document.getElementById('valor_servico').value = d.valor;
+                        document.getElementById('nome').value = d.nome || "";
+                        document.getElementById('telefone').value = d.telefone || "";
+                        document.getElementById('cpf').value = d.cpf || "";
+                        document.getElementById('cep').value = d.cep || "";
+                        if (d.endereco) {
+                            const partes = d.endereco.split(',');
+                            document.getElementById('rua').value = partes[0] || "";
+                            document.getElementById('numero').value = partes[1]?.trim() || "";
+                        }
+                        document.getElementById('bairro').value = d.bairro || "";
+                        document.getElementById('municipio_uf').value = d.municipio || "";
+                        document.getElementById('aparelho').value = d.aparelho || "";
+                        document.getElementById('senha').value = d.senha || "";
+                        document.getElementById('problema').value = d.problema || "";
+                        document.getElementById('valor_servico').value = d.valor || "";
                     }
-                } catch (e) { console.log("Erro ao carregar OS para edição"); }
+                } catch (e) { console.log("Erro ao carregar dados"); }
             }
             lucide.createIcons();
         };
@@ -178,15 +181,13 @@
         document.getElementById('formEntrada').onsubmit = async (e) => {
             e.preventDefault();
             if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
-
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "Processando Alterações..."; btn.disabled = true;
+            btn.innerText = "Salvando..."; btn.disabled = true;
 
             const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
-
             const agora = new Date();
-            const protocoloGerado = agora.getFullYear().toString() + (agora.getMonth() + 1).toString().padStart(2, '0') + agora.getDate().toString().padStart(2, '0') + agora.getHours().toString().padStart(2, '0') + agora.getMinutes().toString().padStart(2, '0');
-            const protocoloFinal = document.getElementById('protocolo_existente').value || protocoloGerado;
+            const protocoloFinal = document.getElementById('protocolo_existente').value || 
+                                   (agora.getFullYear().toString() + (agora.getMonth() + 1).toString().padStart(2, '0') + agora.getDate().toString().padStart(2, '0') + agora.getHours().toString().padStart(2, '0') + agora.getMinutes().toString().padStart(2, '0'));
 
             const payload = {
                 protocolo: protocoloFinal,
@@ -211,14 +212,10 @@
             fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
             .then(() => { 
                 document.getElementById('formEntrada').classList.add('hidden');
-                document.getElementById('msgRetorno').innerText = "A Ordem de Serviço foi atualizada e os documentos regerados com sucesso.";
                 document.getElementById('sucessoMsg').classList.remove('hidden');
                 lucide.createIcons();
             })
-            .catch(err => {
-                alert("Erro ao salvar: " + err);
-                btn.innerText = "Tentar Novamente"; btn.disabled = false;
-            });
+            .catch(err => { alert("Erro: " + err); btn.disabled = false; });
         };
 
         function resize() {
