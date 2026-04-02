@@ -15,9 +15,6 @@
         .check-btn { border: 1px solid #27272a; transition: all 0.2s; cursor: pointer; }
         .check-btn:has(input:checked) { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); color: #22c55e; }
         canvas { background: #fff; border-radius: 8px; cursor: crosshair; }
-        #comprovante { display: none; }
-
-        /* ESTILO DO LOADING */
         #loadingOverlay {
             display: none;
             position: fixed;
@@ -129,7 +126,6 @@
             </div>
             <h2 class="text-2xl font-bold mb-2">Finalizado com Sucesso!</h2>
             <p class="text-zinc-400 mb-6 font-bold uppercase text-[10px]">BR CELULARES LTDA | Curitiba-PR</p>
-            <p id="msgRetorno" class="text-zinc-500 mb-6 text-sm">O documento foi gerado e as fotos foram organizadas na pasta do Drive.</p>
             <button onclick="location.reload()" class="bg-zinc-800 p-4 rounded-xl w-full font-bold uppercase text-xs tracking-widest">Nova Entrada</button>
         </div>
     </div>
@@ -138,131 +134,4 @@
         const canvas = document.getElementById("signature-pad");
         const pad = new SignaturePad(canvas);
         const loading = document.getElementById('loadingOverlay');
-        const URL_API = "https://script.google.com/macros/s/AKfycby2YhCRMQ9a-4GZY-G8fnf1eEFaHzO664i7FnXluchS1fjtaCyCtMIsaolJViQ7ytIl/exec";
-
-        document.getElementById('data_entrada').valueAsDate = new Date();
-
-        window.onload = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const editProtocolo = urlParams.get('edit');
-
-            if (editProtocolo) {
-                loading.style.display = 'flex'; // ATIVA LOADING NA BUSCA
-                document.getElementById('labelAcao').innerText = "Editando OS: " + editProtocolo;
-                document.getElementById('btnEnviar').innerHTML = '<i data-lucide="refresh-cw"></i> Atualizar OS e Sincronizar';
-                document.getElementById('btnEnviar').classList.replace('bg-green-600', 'bg-blue-600');
-                document.getElementById('protocolo_existente').value = editProtocolo;
-
-                try {
-                    const res = await fetch(`${URL_API}?edit=${editProtocolo}`);
-                    const d = await res.json();
-
-                    if (d.status === "sucesso") {
-                        document.getElementById('nome').value = d.nome || "";
-                        document.getElementById('telefone').value = d.telefone || "";
-                        document.getElementById('cpf').value = d.cpf || "";
-                        document.getElementById('cep').value = d.cep || "";
-                        if (d.endereco) {
-                            const partes = d.endereco.split(',');
-                            document.getElementById('rua').value = partes[0] || "";
-                            document.getElementById('numero').value = partes[1]?.trim() || "";
-                        }
-                        document.getElementById('bairro').value = d.bairro || "";
-                        document.getElementById('municipio_uf').value = d.municipio || "";
-                        document.getElementById('aparelho').value = d.aparelho || "";
-                        document.getElementById('senha').value = d.senha || "";
-                        document.getElementById('problema').value = d.problema || "";
-                        document.getElementById('valor_servico').value = d.valor || "";
-                    }
-                } catch (e) { console.log("Erro ao carregar dados"); }
-                loading.style.display = 'none'; // DESATIVA LOADING APÓS BUSCA
-            }
-            lucide.createIcons();
-        };
-
-        function maskTel(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2").substring(0, 15); }
-        function maskCPF(v) { v.value = v.value.replace(/\D/g, "").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2").substring(0, 14); }
-        function maskCEP(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").substring(0, 9); }
-        function maskMoney(v) { let val = v.value.replace(/\D/g, ""); val = (val / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); v.value = val; }
-
-        async function buscarCEP(cep) {
-            const clean = cep.replace(/\D/g, '');
-            if (clean.length === 8) {
-                const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
-                const d = await res.json();
-                if (!d.erro) {
-                    document.getElementById('rua').value = d.logradouro;
-                    document.getElementById('bairro').value = d.bairro;
-                    document.getElementById('municipio_uf').value = `${d.localidade} - ${d.uf}`;
-                    document.getElementById('numero').focus();
-                }
-            }
-        }
-
-        function toggleDesligado(el) {
-            document.querySelectorAll('.item-check input').forEach(c => {
-                c.checked = false;
-                c.closest('label').style.opacity = el.checked ? "0.2" : "1";
-                c.disabled = el.checked;
-            });
-        }
-
-        document.getElementById('formEntrada').onsubmit = async (e) => {
-            e.preventDefault();
-            if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
-            
-            loading.style.display = 'flex'; // ATIVA LOADING NO ENVIO
-            const btn = document.getElementById('btnEnviar');
-            btn.disabled = true;
-
-            const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
-            const agora = new Date();
-            const protocoloFinal = document.getElementById('protocolo_existente').value || 
-                                   (agora.getFullYear().toString() + (agora.getMonth() + 1).toString().padStart(2, '0') + agora.getDate().toString().padStart(2, '0') + agora.getHours().toString().padStart(2, '0') + agora.getMinutes().toString().padStart(2, '0'));
-
-            const payload = {
-                protocolo: protocoloFinal,
-                data: document.getElementById('data_entrada').value.split('-').reverse().join('/'),
-                nome: document.getElementById('nome').value,
-                telefone: document.getElementById('telefone').value,
-                cpf: document.getElementById('cpf').value,
-                cep: document.getElementById('cep').value,
-                endereco: `${document.getElementById('rua').value}, ${document.getElementById('numero').value}`,
-                bairro: document.getElementById('bairro').value,
-                municipio: document.getElementById('municipio_uf').value,
-                aparelho: document.getElementById('aparelho').value,
-                senha: document.getElementById('senha').value,
-                problema: document.getElementById('problema').value,
-                valor: document.getElementById('valor_servico').value,
-                checklist: document.getElementById('desligado').checked ? "DESLIGADO TOTALMENTE" : [...document.querySelectorAll('input[name="checklist"]:checked')].map(s => s.value).join(", "),
-                fotoFrente: await toB64(document.getElementById('fotoFrente').files[0]),
-                fotoVerso: await toB64(document.getElementById('fotoVerso').files[0]),
-                assinatura: pad.toDataURL()
-            };
-
-            fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-            .then(() => { 
-                loading.style.display = 'none'; // DESATIVA LOADING AO FINALIZAR
-                document.getElementById('formEntrada').classList.add('hidden');
-                document.getElementById('sucessoMsg').classList.remove('hidden');
-                lucide.createIcons();
-            })
-            .catch(err => { 
-                loading.style.display = 'none';
-                alert("Erro: " + err); 
-                btn.disabled = false; 
-            });
-        };
-
-        function resize() {
-            const ratio = window.devicePixelRatio || 1;
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            pad.clear();
-        }
-        window.onresize = resize; resize();
-        lucide.createIcons();
-    </script>
-</body>
-</html> 
+        const URL_API = "https://script.google.
