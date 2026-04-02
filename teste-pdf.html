@@ -1,11 +1,10 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Prova de fogo: O Google Script não renderiza sombras nem gradientes assim */
         .card-premium {
             background: white;
             border-radius: 40px;
@@ -14,6 +13,10 @@
         }
         .gradient-brcell {
             background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+        }
+        /* Força o PDF a ignorar o fundo cinza da página e focar só no card */
+        @media print {
+            body { background: none; p: 0; }
         }
     </style>
 </head>
@@ -24,60 +27,79 @@
         <div class="gradient-brcell p-10 rounded-[30px] text-white flex justify-between items-center mb-10">
             <div>
                 <h1 class="text-6xl font-black italic tracking-tighter">BRCELL</h1>
-                <p class="uppercase tracking-[0.4em] text-[10px] opacity-80">Design de Alta Performance</p>
+                <p class="uppercase tracking-[0.4em] text-[10px] opacity-80">Assistência Técnica Especializada</p>
             </div>
             <div class="text-right">
-                <p class="font-bold text-xl">TESTE DE RENDERIZAÇÃO</p>
-                <p class="text-xs opacity-70">Se você vê bordas redondas e este verde vivo, o GitHub funcionou!</p>
+                <p class="font-bold text-xl uppercase">Ordem de Serviço</p>
+                <p class="text-xs opacity-90">Curitiba - PR | (41) 91095-8275</p>
             </div>
         </div>
 
-        <div class="space-y-8">
+        <div class="space-y-6">
             <div class="flex gap-6">
-                <div class="flex-1 bg-zinc-50 p-8 rounded-[25px] border border-zinc-100">
-                    <p class="text-green-600 font-black text-[10px] uppercase mb-2">Protocolo de Teste</p>
-                    <p class="text-3xl font-bold text-zinc-800">#2026-BETA</p>
+                <div class="flex-1 bg-zinc-50 p-6 rounded-[25px] border border-zinc-100">
+                    <p class="text-green-600 font-black text-[10px] uppercase mb-1">Protocolo</p>
+                    <p id="view-protocolo" class="text-2xl font-bold text-zinc-800">#000000</p>
                 </div>
-                <div class="flex-1 bg-zinc-50 p-8 rounded-[25px] border border-zinc-100">
-                    <p class="text-green-600 font-black text-[10px] uppercase mb-2">Status da Fábrica</p>
-                    <p class="text-3xl font-bold text-zinc-800">GITHUB ACTIVE</p>
+                <div class="flex-1 bg-zinc-50 p-6 rounded-[25px] border border-zinc-100 text-right">
+                    <p class="text-green-600 font-black text-[10px] uppercase mb-1">Data de Entrada</p>
+                    <p id="view-data" class="text-2xl font-bold text-zinc-800">--/--/----</p>
                 </div>
             </div>
 
-            <div class="p-10 bg-zinc-900 rounded-[35px] text-white shadow-inner">
-                <h2 class="text-green-400 font-bold mb-4 uppercase text-xs tracking-widest">Diagnóstico Técnico</h2>
-                <p class="text-xl leading-relaxed">
-                    Este documento prova que o motor do navegador (GitHub) é superior ao motor do Apps Script. 
-                    Bordas arredondadas de 40px e fontes suavizadas são impossíveis via .gs puro.
-                </p>
+            <div class="bg-zinc-50 p-8 rounded-[30px] border border-zinc-100">
+                <p class="text-green-600 font-black text-[10px] uppercase mb-2">Informações do Cliente</p>
+                <h2 id="view-nome" class="text-2xl font-bold text-zinc-900 mb-1">NOME DO CLIENTE</h2>
+                <p id="view-telefone" class="text-zinc-500 font-medium">Telefone: (00) 00000-0000</p>
             </div>
 
-            <div class="flex justify-center pt-10">
-                <div class="w-64 h-24 border-b-4 border-green-500 flex items-end justify-center pb-2 text-zinc-400 font-bold uppercase text-[10px] tracking-widest">
-                    Assinatura Digital Processada
+            <div class="bg-zinc-900 p-8 rounded-[35px] text-white shadow-xl">
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <p class="text-green-400 font-bold text-[10px] uppercase mb-2">Equipamento</p>
+                        <p id="view-aparelho" class="text-xl font-bold italic">MODELO DO APARELHO</p>
+                    </div>
+                    <div>
+                        <p class="text-green-400 font-bold text-[10px] uppercase mb-2">Defeito Relatado</p>
+                        <p id="view-problema" class="text-sm opacity-90 leading-relaxed text-justify">Descrição do problema relatado pelo cliente na entrada...</p>
+                    </div>
                 </div>
+            </div>
+
+            <div class="bg-green-50 border-2 border-green-200 p-8 rounded-[30px] text-center">
+                <p class="text-green-700 font-black text-[10px] uppercase mb-1">Valor Total Estimado</p>
+                <p id="view-valor" class="text-5xl font-black text-green-600">R$ 0,00</p>
+            </div>
+
+            <div class="flex flex-col items-center pt-6">
+                <img id="view-assinatura" src="" class="max-w-[250px] border-b-2 border-zinc-900 mb-2" style="min-height: 80px;">
+                <p class="text-zinc-400 font-bold uppercase text-[9px] tracking-[0.3em]">Assinatura Digital Processada</p>
+            </div>
+
+            <div class="pt-6 border-t border-zinc-100 text-[8px] text-zinc-400 leading-tight text-center uppercase tracking-wider">
+                Garantia de 90 dias conforme CDC. A BRCELL não se responsabiliza por perda de dados. <br>
+                Aparelhos molhados perdem a garantia. Lacre rompido anula o reparo.
             </div>
         </div>
     </div>
 
     <div class="fixed bottom-10 right-10">
-        <button onclick="gerarTeste()" class="bg-green-600 text-white px-8 py-4 rounded-full font-black shadow-2xl hover:scale-105 transition-all">
-            GERAR PDF AGORA
+        <button onclick="gerarPdfLocal()" class="bg-green-600 text-white px-8 py-4 rounded-full font-black shadow-2xl hover:scale-105 transition-all uppercase italic">
+            Visualizar PDF Premium
         </button>
     </div>
 
     <script>
-        async function gerarTeste() {
+        // Função para você testar manualmente como está ficando o design
+        async function gerarPdfLocal() {
             const element = document.getElementById('layout-os');
             const opt = {
-                margin: 10,
-                filename: 'teste_brcell.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
+                margin: 0,
+                filename: 'recibo_brcell.pdf',
+                image: { type: 'jpeg', quality: 1 },
                 html2canvas: { scale: 3, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-
-            // Isso gera o PDF e faz o download para você ver o resultado no PC
             html2pdf().set(opt).from(element).save();
         }
     </script>
