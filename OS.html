@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         body { background-color: #09090b; color: #fafafa; font-family: 'Inter', sans-serif; }
         .glass-card { background: rgba(24, 24, 27, 0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
@@ -15,6 +17,7 @@
         .check-btn { border: 1px solid #27272a; transition: all 0.2s; cursor: pointer; }
         .check-btn:has(input:checked) { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); color: #22c55e; }
         canvas { background: #fff; border-radius: 8px; cursor: crosshair; }
+        
         #loadingOverlay {
             display: none;
             position: fixed;
@@ -26,14 +29,14 @@
             justify-content: center;
         }
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #27272a;
-            border-top: 4px solid #22c55e;
-            border-radius: 50%;
+            width: 40px; height: 40px; border: 4px solid #27272a;
+            border-top: 4px solid #22c55e; border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Estilo oculto para o template do PDF */
+        #pdf-template { position: absolute; left: -9999px; top: 0; width: 210mm; color: #1e293b; background: white; }
     </style>
 </head>
 <body class="p-4 bg-zinc-950">
@@ -41,8 +44,10 @@
     <div id="loadingOverlay">
         <div class="spinner mb-4"></div>
         <p class="text-green-500 font-black animate-pulse uppercase tracking-widest text-[10px]">Processando Ordem de Serviço...</p>
-        <p class="text-zinc-500 text-[8px] mt-2 uppercase">Sincronizando com a BRCELL</p>
+        <p id="loadingStatus" class="text-zinc-500 text-[8px] mt-2 uppercase text-center">Salvando dados e gerando recibo premium</p>
     </div>
+
+    <div id="pdf-template"></div>
 
     <div class="max-w-2xl mx-auto glass-card rounded-2xl p-6 mb-10 shadow-2xl">
         <form id="formEntrada" class="space-y-6">
@@ -126,6 +131,7 @@
             </div>
             <h2 class="text-2xl font-bold mb-2">Finalizado com Sucesso!</h2>
             <p class="text-zinc-400 mb-6 font-bold uppercase text-[10px]">BR CELULARES LTDA | Curitiba-PR</p>
+            <p id="msgRetorno" class="text-zinc-500 mb-6 text-sm italic">O recibo profissional foi salvo no Drive.</p>
             <button onclick="location.reload()" class="bg-zinc-800 p-4 rounded-xl w-full font-bold uppercase text-xs tracking-widest">Nova Entrada</button>
         </div>
     </div>
@@ -134,4 +140,152 @@
         const canvas = document.getElementById("signature-pad");
         const pad = new SignaturePad(canvas);
         const loading = document.getElementById('loadingOverlay');
-        const URL_API = "https://script.google.
+        
+        // --- COLOQUE SUA URL DO GOOGLE SCRIPT AQUI ---
+        const URL_API = "https://script.google.com/macros/s/AKfycbyTqO79K1XpE_p6L6-621hE2_fL9v-oV-gW0xO1v_8VvF6q9_1P6P1_v1P6P1_v1/exec";
+
+        document.getElementById('data_entrada').valueAsDate = new Date();
+
+        // Máscaras e Utilitários
+        function maskTel(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2").substring(0, 15); }
+        function maskCPF(v) { v.value = v.value.replace(/\D/g, "").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2").substring(0, 14); }
+        function maskCEP(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").substring(0, 9); }
+        function maskMoney(v) { let val = v.value.replace(/\D/g, ""); val = (val / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); v.value = val; }
+
+        async function buscarCEP(cep) {
+            const clean = cep.replace(/\D/g, '');
+            if (clean.length === 8) {
+                const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+                const d = await res.json();
+                if (!d.erro) {
+                    document.getElementById('rua').value = d.logradouro;
+                    document.getElementById('bairro').value = d.bairro;
+                    document.getElementById('municipio_uf').value = `${d.localidade} - ${d.uf}`;
+                    document.getElementById('numero').focus();
+                }
+            }
+        }
+
+        function toggleDesligado(el) {
+            document.querySelectorAll('.item-check input').forEach(c => {
+                c.checked = false;
+                c.closest('label').style.opacity = el.checked ? "0.2" : "1";
+                c.disabled = el.checked;
+            });
+        }
+
+        // --- LÓGICA DE ENVIO E GERAÇÃO DE PDF ---
+        document.getElementById('formEntrada').onsubmit = async (e) => {
+            e.preventDefault();
+            if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
+            
+            loading.style.display = 'flex';
+            const btn = document.getElementById('btnEnviar');
+            btn.disabled = true;
+
+            const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
+            const agora = new Date();
+            const protocoloFinal = document.getElementById('protocolo_existente').value || 
+                                   (agora.getFullYear().toString() + (agora.getMonth() + 1).toString().padStart(2, '0') + agora.getDate().toString().padStart(2, '0') + agora.getHours().toString().padStart(2, '0') + agora.getMinutes().toString().padStart(2, '0'));
+
+            const payload = {
+                protocolo: protocoloFinal,
+                data: document.getElementById('data_entrada').value.split('-').reverse().join('/'),
+                nome: document.getElementById('nome').value,
+                telefone: document.getElementById('telefone').value,
+                cpf: document.getElementById('cpf').value,
+                cep: document.getElementById('cep').value,
+                endereco: `${document.getElementById('rua').value}, ${document.getElementById('numero').value}`,
+                bairro: document.getElementById('bairro').value,
+                municipio: document.getElementById('municipio_uf').value,
+                aparelho: document.getElementById('aparelho').value,
+                senha: document.getElementById('senha').value,
+                problema: document.getElementById('problema').value,
+                valor: document.getElementById('valor_servico').value,
+                checklist: document.getElementById('desligado').checked ? "DESLIGADO TOTALMENTE" : [...document.querySelectorAll('input[name="checklist"]:checked')].map(s => s.value).join(", "),
+                fotoFrente: await toB64(document.getElementById('fotoFrente').files[0]),
+                fotoVerso: await toB64(document.getElementById('fotoVerso').files[0]),
+                assinatura: pad.toDataURL()
+            };
+
+            try {
+                // 1. SALVAR DADOS E FOTOS NO SCRIPT
+                document.getElementById('loadingStatus').innerText = "Enviando dados e fotos...";
+                await fetch(URL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+
+                // 2. GERAR O PDF ELEGANTE NO LADO DO CLIENTE
+                document.getElementById('loadingStatus').innerText = "Renderizando PDF Premium...";
+                const template = document.getElementById('pdf-template');
+                template.innerHTML = `
+                    <div style="padding: 40px; font-family: 'Segoe UI', Arial, sans-serif;">
+                        <div style="border: 1px solid #e2e8f0; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; background: white;">
+                            <div style="background: linear-gradient(135deg, #16a34a, #22c55e); color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
+                                <div><h1 style="margin:0; font-size: 32px; font-weight: 800;">BRCELL</h1><small style="opacity:0.9; text-transform: uppercase; letter-spacing: 1px;">Assistência Técnica e Acessórios</small></div>
+                                <div style="text-align:right; font-size: 10px; line-height: 1.5;"><strong>BR CELULARES LTDA</strong><br>CNPJ: 42.206.278/0001-60<br>Rua Riachuelo, 90, Curitiba - PR<br>(41) 91095-8275</div>
+                            </div>
+                            <div style="padding: 30px;">
+                                <h2 style="text-align: center; color: #16a34a; margin-bottom: 25px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">ORDEM DE SERVIÇO Nº ${protocoloFinal}</h2>
+                                <div style="background: #f8fafc; border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                                    <strong>CLIENTE:</strong> ${payload.nome.toUpperCase()}<br><strong>TELEFONE:</strong> ${payload.telefone}<br><strong>DATA:</strong> ${payload.data}
+                                </div>
+                                <div style="background: #f8fafc; border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                                    <strong>APARELHO:</strong> ${payload.aparelho.toUpperCase()}<br><strong>DEFEITO:</strong> ${payload.problema.toUpperCase()}
+                                </div>
+                                <div style="background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 25px; text-align: center; margin-bottom: 20px;">
+                                    <div style="color: #16a34a; font-size: 36px; font-weight: 900;">${payload.valor}</div>
+                                </div>
+                                <div style="text-align: center; margin-top: 40px;">
+                                    <img src="${payload.assinatura}" width="200" style="border-bottom: 1px solid #94a3b8;">
+                                    <p style="font-size: 10px; font-weight: bold; margin-top: 5px; color: #64748b;">ASSINATURA DO CLIENTE</p>
+                                </div>
+                                <div style="margin-top: 30px; font-size: 9px; color: #94a3b8; line-height: 1.6; text-align: center;">
+                                    Garantia de 90 dias conforme CDC. A BRCELL não se responsabiliza por perda de dados.<br>
+                                    Aparelhos molhados ou com queda perdem a garantia. Lacre rompido anula o reparo.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const opt = { margin: 0, filename: `OS_${protocoloFinal}.pdf`, image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+                const pdfBlob = await html2pdf().set(opt).from(template).output('blob');
+
+                // 3. ENVIAR O PDF PRONTO PARA O DRIVE
+                document.getElementById('loadingStatus').innerText = "Finalizando e salvando PDF...";
+                const reader = new FileReader();
+                reader.readAsDataURL(pdfBlob);
+                reader.onloadend = async () => {
+                    await fetch(URL_API, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify({
+                            acao: "salvar_pdf",
+                            protocolo: protocoloFinal,
+                            pdfBase64: reader.result
+                        })
+                    });
+
+                    loading.style.display = 'none';
+                    document.getElementById('formEntrada').classList.add('hidden');
+                    document.getElementById('sucessoMsg').classList.remove('hidden');
+                };
+
+            } catch (err) {
+                alert("Erro ao processar: " + err);
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        };
+
+        function resize() {
+            const ratio = window.devicePixelRatio || 1;
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            pad.clear();
+        }
+        window.onresize = resize; resize();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
