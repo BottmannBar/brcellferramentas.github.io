@@ -38,6 +38,7 @@
     </div>
 
     <div class="max-w-2xl mx-auto glass-card rounded-2xl p-6 mb-10 shadow-2xl">
+        
         <div class="mb-8 p-4 bg-green-500/5 rounded-2xl border border-green-500/20">
             <label class="text-[10px] font-black text-green-500 uppercase tracking-widest mb-2 block">Localizar Cliente (Nome, CPF ou Celular)</label>
             <div class="relative">
@@ -153,29 +154,27 @@
         async function verificarCadastro(termo) {
             if (termo.length < 3) return;
             loading.style.display = 'flex';
-            document.getElementById('loadingStatus').innerText = "Buscando cliente...";
+            document.getElementById('loadingStatus').innerText = "Buscando na base BRCELL...";
             try {
                 const res = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({ acao: "buscar", termo: termo }) });
                 const d = await res.json();
                 if (d.status === "encontrado") {
-                    document.getElementById('nome').value = d.c.nome;
-                    document.getElementById('doc_cliente').value = d.c.doc;
-                    document.getElementById('email').value = d.c.email;
-                    document.getElementById('celular1').value = d.c.cel1;
-                    document.getElementById('celular2').value = d.c.cel2;
-                    document.getElementById('endereco').value = d.c.end;
-                    document.getElementById('numero').value = d.c.num;
-                    document.getElementById('complemento').value = d.c.comp;
-                    document.getElementById('bairro').value = d.c.bairro;
-                    document.getElementById('cep').value = d.c.cep;
-                    document.getElementById('cidade_uf').value = `${d.c.cid} - ${d.c.uf}`;
-                    alert("Cliente localizado! Dados preenchidos.");
+                    document.getElementById('nome').value = d.c.nome || "";
+                    document.getElementById('doc_cliente').value = d.c.doc || "";
+                    document.getElementById('email').value = d.c.email || "";
+                    document.getElementById('celular1').value = d.c.cel1 || "";
+                    document.getElementById('celular2').value = d.c.cel2 || "";
+                    document.getElementById('endereco').value = d.c.end || "";
+                    document.getElementById('numero').value = d.c.num || "";
+                    document.getElementById('complemento').value = d.c.comp || "";
+                    document.getElementById('bairro').value = d.c.bairro || "";
+                    document.getElementById('cep').value = d.c.cep || "";
+                    document.getElementById('cidade_uf').value = (d.c.cid && d.c.uf) ? `${d.c.cid} - ${d.c.uf}` : d.c.cid || "";
+                    alert("Cliente localizado!");
                 } else {
-                    alert("Cliente não encontrado.");
+                    alert("Cliente não cadastrado.");
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
             loading.style.display = 'none';
         }
 
@@ -194,7 +193,6 @@
 
             const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
             
-            // DADOS PARA O CADASTRO
             const dadosBase = {
                 nome: document.getElementById('nome').value,
                 doc: document.getElementById('doc_cliente').value,
@@ -209,13 +207,12 @@
                 cid_uf: document.getElementById('cidade_uf').value
             };
 
-            // DADOS EXCLUSIVOS DO SERVIÇO
             const dadosServico = {
                 aparelho: document.getElementById('aparelho').value,
                 senha: document.getElementById('senha').value,
                 problema: document.getElementById('problema').value,
                 valor: document.getElementById('valor_servico').value,
-                checklist: document.getElementById('desligado').checked ? "DESLIGADO TOTALMENTE" : [...document.querySelectorAll('input[name="checklist"]:checked')].map(s => s.value).join(", "),
+                checklist: document.getElementById('desligado').checked ? "DESLIGADO" : [...document.querySelectorAll('input[name="checklist"]:checked')].map(s => s.value).join(", "),
                 assinatura: pad.toDataURL(),
                 fotoFrente: await toB64(document.getElementById('fotoFrente').files[0]),
                 fotoVerso: await toB64(document.getElementById('fotoVerso').files[0]),
@@ -224,31 +221,26 @@
             };
 
             try {
-                // 1. SALVAR NO CADASTRO E OBTER O ID
+                // 1. SALVAR CADASTRO
                 document.getElementById('loadingStatus').innerText = "Salvando Cadastro...";
                 const resCad = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({acao: "salvar", ...dadosBase}) });
                 const dataCad = await resCad.json();
                 
                 if (dataCad.status === "sucesso") {
-                    const idGerado = dataCad.id; // PEGANDO O ID OFICIAL DA PLANILHA
+                    const idGerado = dataCad.id;
 
-                    // 2. SALVAR NO SERVIÇO USANDO O ID DO CADASTRO
-                    document.getElementById('loadingStatus').innerText = "Salvando Serviço OS #" + idGerado + "...";
+                    // 2. SALVAR SERVIÇO (no-cors para evitar travas com fotos)
+                    document.getElementById('loadingStatus').innerText = "Enviando OS #" + idGerado + "...";
                     await fetch(URL_SERVICO, { 
                         method: 'POST', 
+                        mode: 'no-cors',
                         body: JSON.stringify({id: idGerado, ...dadosBase, ...dadosServico}) 
                     });
 
                     alert("Sucesso! OS #" + idGerado + " registrada.");
                     location.reload();
-                } else {
-                    throw new Error("Falha ao obter ID de cadastro.");
                 }
-
-            } catch (err) { 
-                console.error(err);
-                alert("Erro ao salvar dados."); 
-            }
+            } catch (err) { alert("Erro ao salvar."); }
             loading.style.display = 'none';
         };
 
