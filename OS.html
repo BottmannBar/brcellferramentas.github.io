@@ -1,4 +1,4 @@
-V1
+2V
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -140,22 +140,15 @@ V1
         const pad = new SignaturePad(canvas);
         const loading = document.getElementById('loadingOverlay');
 
+        // URLs DE IMPLANTAÇÃO (Atualizadas)
         const URL_CADASTRO = "https://script.google.com/macros/s/AKfycbwMl9MwzfwJeCV2zvsuOhiYJ4X0ZA1UHVRuWny23pkG-3WCfrYPP5iYcCV0-dTkwI1fsw/exec";
-        const URL_SERVICO  = "https://script.google.com/macros/s/AKfycby2YhCRMQ9a-4GZY-G8fnf1eEFaHzO664i7FnXluchS1fjtaCyCtMIsaolJViQ7ytIl/exec";
+        const URL_SERVICO  = "https://script.google.com/macros/s/AKfycbw7aF7vPnHfXfmNK37a1Q_Cjk8pUpzMJrKOBVL4j4tna8vqn3ocmFU4v7jP7jIaDwvL/exec";
 
         document.getElementById('data_entrada').valueAsDate = new Date();
-
-        document.getElementById('busca_cliente').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                verificarCadastro(this.value);
-            }
-        });
 
         async function verificarCadastro(termo) {
             if (termo.length < 3) return;
             loading.style.display = 'flex';
-            document.getElementById('loadingStatus').innerText = "Buscando cliente...";
             try {
                 const res = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({ acao: "buscar", termo: termo }) });
                 const d = await res.json();
@@ -171,9 +164,6 @@ V1
                     document.getElementById('bairro').value = d.c.bairro || "";
                     document.getElementById('cep').value = d.c.cep || "";
                     document.getElementById('cidade_uf').value = (d.c.cid && d.c.uf) ? `${d.c.cid} - ${d.c.uf}` : d.c.cid || "";
-                    alert("Cliente localizado! Dados preenchidos.");
-                } else {
-                    alert("Cliente não encontrado.");
                 }
             } catch (e) { console.error(e); }
             loading.style.display = 'none';
@@ -192,7 +182,12 @@ V1
             if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
             loading.style.display = 'flex';
 
-            const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
+            const toB64 = f => new Promise(res => { 
+                if(!f) return res(""); 
+                const r = new FileReader(); 
+                r.onload = () => res(r.result); 
+                r.readAsDataURL(f); 
+            });
             
             const dadosBase = {
                 nome: document.getElementById('nome').value,
@@ -208,6 +203,9 @@ V1
                 cid_uf: document.getElementById('cidade_uf').value
             };
 
+            const fotoFrente = await toB64(document.getElementById('fotoFrente').files[0]);
+            const fotoVerso = await toB64(document.getElementById('fotoVerso').files[0]);
+
             const dadosServico = {
                 aparelho: document.getElementById('aparelho').value,
                 senha: document.getElementById('senha').value,
@@ -215,14 +213,14 @@ V1
                 valor: document.getElementById('valor_servico').value,
                 checklist: document.getElementById('desligado').checked ? "DESLIGADO" : [...document.querySelectorAll('input[name="checklist"]:checked')].map(s => s.value).join(", "),
                 assinatura: pad.toDataURL(),
-                fotoFrente: await toB64(document.getElementById('fotoFrente').files[0]),
-                fotoVerso: await toB64(document.getElementById('fotoVerso').files[0]),
+                fotoFrente: fotoFrente,
+                fotoVerso: fotoVerso,
                 data_entrada: document.getElementById('data_entrada').value,
                 data_previsao: document.getElementById('data_previsao').value
             };
 
             try {
-                // 1. SALVAR CADASTRO E OBTER O ID OFICIAL
+                // 1. SALVAR CADASTRO
                 document.getElementById('loadingStatus').innerText = "Atualizando Cadastro...";
                 const resCad = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({acao: "salvar", ...dadosBase}) });
                 const dataCad = await resCad.json();
@@ -230,22 +228,19 @@ V1
                 if (dataCad.status === "sucesso") {
                     const idOficial = dataCad.id;
 
-                    // 2. SALVAR SERVIÇO (Usando o ID oficial do cadastro)
-                    document.getElementById('loadingStatus').innerText = "Salvando Serviço OS #" + idOficial + "...";
+                    // 2. SALVAR SERVIÇO
+                    document.getElementById('loadingStatus').innerText = "Sincronizando OS #" + idOficial + "...";
                     await fetch(URL_SERVICO, { 
                         method: 'POST', 
                         mode: 'no-cors',
                         body: JSON.stringify({id: idOficial, ...dadosBase, ...dadosServico}) 
                     });
 
-                    alert("Sucesso! OS #" + idOficial + " registrada na BRCELL.");
+                    alert("BRCELL: OS #" + idOficial + " salva com sucesso!");
                     location.reload();
-                } else {
-                    alert("Erro ao processar ID: " + dataCad.msg);
                 }
             } catch (err) { 
-                console.error(err);
-                alert("Erro na sincronização. Verifique as URLs dos scripts."); 
+                alert("Erro ao salvar. Verifique sua conexão."); 
             }
             loading.style.display = 'none';
         };
@@ -262,7 +257,6 @@ V1
                     document.getElementById('endereco').value = d.logradouro;
                     document.getElementById('bairro').value = d.bairro;
                     document.getElementById('cidade_uf').value = `${d.localidade} - ${d.uf}`;
-                    document.getElementById('numero').focus();
                 }
             }
         }
@@ -278,4 +272,3 @@ V1
     </script>
 </body>
 </html>
-```
