@@ -43,7 +43,7 @@
             <div class="relative">
                 <input type="text" id="busca_cliente" placeholder="Digite para pesquisar..." 
                        class="w-full p-3 pl-10 rounded-xl outline-none border-none focus:ring-1 focus:ring-green-500">
-                <button onclick="verificarCadastro(document.getElementById('busca_cliente').value)" 
+                <button type="button" onclick="verificarCadastro(document.getElementById('busca_cliente').value)" 
                         class="absolute right-2 top-2 p-1.5 bg-green-600 rounded-lg hover:bg-green-500 transition-colors">
                     <i data-lucide="search" class="w-4 h-4 text-white"></i>
                 </button>
@@ -143,9 +143,9 @@
 
         document.getElementById('data_entrada').valueAsDate = new Date();
 
-        // Escuta a tecla ENTER na barra de busca
         document.getElementById('busca_cliente').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 verificarCadastro(this.value);
             }
         });
@@ -173,7 +173,9 @@
                 } else {
                     alert("Cliente não encontrado.");
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error(e);
+            }
             loading.style.display = 'none';
         }
 
@@ -192,7 +194,8 @@
 
             const toB64 = f => new Promise(res => { if(!f) res(""); const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
             
-            const payload = {
+            // DADOS PARA O CADASTRO
+            const dadosBase = {
                 nome: document.getElementById('nome').value,
                 doc: document.getElementById('doc_cliente').value,
                 email: document.getElementById('email').value,
@@ -203,7 +206,11 @@
                 comp: document.getElementById('complemento').value,
                 bairro: document.getElementById('bairro').value,
                 cep: document.getElementById('cep').value,
-                cid_uf: document.getElementById('cidade_uf').value,
+                cid_uf: document.getElementById('cidade_uf').value
+            };
+
+            // DADOS EXCLUSIVOS DO SERVIÇO
+            const dadosServico = {
                 aparelho: document.getElementById('aparelho').value,
                 senha: document.getElementById('senha').value,
                 problema: document.getElementById('problema').value,
@@ -217,15 +224,31 @@
             };
 
             try {
-                document.getElementById('loadingStatus').innerText = "Sincronizando Cadastro...";
-                await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({acao: "salvar", ...payload}) });
+                // 1. SALVAR NO CADASTRO E OBTER O ID
+                document.getElementById('loadingStatus').innerText = "Salvando Cadastro...";
+                const resCad = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({acao: "salvar", ...dadosBase}) });
+                const dataCad = await resCad.json();
                 
-                document.getElementById('loadingStatus').innerText = "Sincronizando Serviço...";
-                await fetch(URL_SERVICO, { method: 'POST', body: JSON.stringify(payload) });
-                
-                alert("Salvo com sucesso!");
-                location.reload();
-            } catch (err) { alert("Erro ao salvar."); }
+                if (dataCad.status === "sucesso") {
+                    const idGerado = dataCad.id; // PEGANDO O ID OFICIAL DA PLANILHA
+
+                    // 2. SALVAR NO SERVIÇO USANDO O ID DO CADASTRO
+                    document.getElementById('loadingStatus').innerText = "Salvando Serviço OS #" + idGerado + "...";
+                    await fetch(URL_SERVICO, { 
+                        method: 'POST', 
+                        body: JSON.stringify({id: idGerado, ...dadosBase, ...dadosServico}) 
+                    });
+
+                    alert("Sucesso! OS #" + idGerado + " registrada.");
+                    location.reload();
+                } else {
+                    throw new Error("Falha ao obter ID de cadastro.");
+                }
+
+            } catch (err) { 
+                console.error(err);
+                alert("Erro ao salvar dados."); 
+            }
             loading.style.display = 'none';
         };
 
