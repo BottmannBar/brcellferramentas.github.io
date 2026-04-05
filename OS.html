@@ -154,7 +154,7 @@
         async function verificarCadastro(termo) {
             if (termo.length < 3) return;
             loading.style.display = 'flex';
-            document.getElementById('loadingStatus').innerText = "Buscando na base BRCELL...";
+            document.getElementById('loadingStatus').innerText = "Buscando cliente...";
             try {
                 const res = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({ acao: "buscar", termo: termo }) });
                 const d = await res.json();
@@ -170,9 +170,9 @@
                     document.getElementById('bairro').value = d.c.bairro || "";
                     document.getElementById('cep').value = d.c.cep || "";
                     document.getElementById('cidade_uf').value = (d.c.cid && d.c.uf) ? `${d.c.cid} - ${d.c.uf}` : d.c.cid || "";
-                    alert("Cliente localizado!");
+                    alert("Cliente localizado! Dados preenchidos.");
                 } else {
-                    alert("Cliente não cadastrado.");
+                    alert("Cliente não encontrado.");
                 }
             } catch (e) { console.error(e); }
             loading.style.display = 'none';
@@ -221,26 +221,31 @@
             };
 
             try {
-                // 1. SALVAR CADASTRO
-                document.getElementById('loadingStatus').innerText = "Salvando Cadastro...";
+                // 1. SALVAR CADASTRO E OBTER O ID OFICIAL
+                document.getElementById('loadingStatus').innerText = "Atualizando Cadastro...";
                 const resCad = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({acao: "salvar", ...dadosBase}) });
                 const dataCad = await resCad.json();
                 
                 if (dataCad.status === "sucesso") {
-                    const idGerado = dataCad.id;
+                    const idOficial = dataCad.id;
 
-                    // 2. SALVAR SERVIÇO (no-cors para evitar travas com fotos)
-                    document.getElementById('loadingStatus').innerText = "Enviando OS #" + idGerado + "...";
+                    // 2. SALVAR SERVIÇO (Usando o ID oficial do cadastro)
+                    document.getElementById('loadingStatus').innerText = "Salvando Serviço OS #" + idOficial + "...";
                     await fetch(URL_SERVICO, { 
                         method: 'POST', 
                         mode: 'no-cors',
-                        body: JSON.stringify({id: idGerado, ...dadosBase, ...dadosServico}) 
+                        body: JSON.stringify({id: idOficial, ...dadosBase, ...dadosServico}) 
                     });
 
-                    alert("Sucesso! OS #" + idGerado + " registrada.");
+                    alert("Sucesso! OS #" + idOficial + " registrada na BRCELL.");
                     location.reload();
+                } else {
+                    alert("Erro ao processar ID: " + dataCad.msg);
                 }
-            } catch (err) { alert("Erro ao salvar."); }
+            } catch (err) { 
+                console.error(err);
+                alert("Erro na sincronização. Verifique as URLs dos scripts."); 
+            }
             loading.style.display = 'none';
         };
 
@@ -256,6 +261,7 @@
                     document.getElementById('endereco').value = d.logradouro;
                     document.getElementById('bairro').value = d.bairro;
                     document.getElementById('cidade_uf').value = `${d.localidade} - ${d.uf}`;
+                    document.getElementById('numero').focus();
                 }
             }
         }
@@ -271,3 +277,4 @@
     </script>
 </body>
 </html>
+```
