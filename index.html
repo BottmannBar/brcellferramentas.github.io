@@ -1,254 +1,257 @@
-<canvas id="matrix"></canvas>
-
-<div class="scanline"></div>
-
-<div class="login-frame">
-  <header>
-    <h1 class="glitch" data-text="BottSapphire">BottSapphire</h1>
-    <div class="typing">Sistema Operacional</div>
-  </header>
-
-  <form id="loginForm">
-    <div class="input-group">
-      <label>>Login</label>
-      <input type="text" placeholder="LOGIN_ID" autocomplete="off" spellcheck="false">
-    </div>
-
-    <div class="input-group">
-      <label>>Senha</label>
-      <input type="password" placeholder="********">
-    </div>
-
-    <button type="submit" id="loginBtn">Acessar</button>
-  </form>
-
-  <div class="footer-status">
-    <span>[STATUS: Online]</span>
-    <span id="clock">00:00:00</span>
-  </div>
-</div>
-<style>
-:root {
-  --bg: #00050a;
-  --sapphire: #0077be;
-  --cyan: #00f2ff;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: 'Courier New', monospace;
-  overflow: hidden;
-}
-
-/* Fundo Matrix */
-#matrix {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1;
-}
-
-/* Container de Login */
-.login-frame {
-  position: relative;
-  z-index: 10;
-  width: 380px;
-  padding: 40px;
-  background: rgba(0, 10, 20, 0.85);
-  border: 1px solid var(--sapphire);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 20px rgba(0, 119, 190, 0.4);
-  animation: pulse 4s infinite alternate;
-}
-
-@keyframes pulse {
-  from { border-color: var(--sapphire); box-shadow: 0 0 15px rgba(0, 119, 190, 0.3); }
-  to { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 242, 255, 0.5); }
-}
-
-h1 {
-  font-size: 2.2rem;
-  color: var(--cyan);
-  text-align: center;
-  margin: 0;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-}
-
-.typing {
-  color: var(--sapphire);
-  text-align: center;
-  font-size: 0.8rem;
-  margin-bottom: 30px;
-  letter-spacing: 2px;
-  border-right: 2px solid var(--cyan);
-  white-space: nowrap;
-  overflow: hidden;
-  width: 19ch;
-  margin-left: auto;
-  margin-right: auto;
-  animation: type 4s steps(19) infinite, blink 0.5s infinite;
-}
-
-@keyframes type { from { width: 0; } }
-@keyframes blink { 50% { border-color: transparent; } }
-
-.input-group { margin-bottom: 20px; }
-label { display: block; color: var(--sapphire); font-size: 0.7rem; margin-bottom: 5px; }
-
-input {
-  width: 100%;
-  padding: 12px;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid var(--sapphire);
-  color: var(--cyan);
-  box-sizing: border-box;
-  outline: none;
-}
-
-input:focus { border-color: var(--cyan); }
-
-button {
-  width: 100%;
-  padding: 15px;
-  background: transparent;
-  border: 1px solid var(--cyan);
-  color: var(--cyan);
-  cursor: pointer;
-  font-weight: bold;
-  text-transform: uppercase;
-  transition: 0.3s;
-}
-
-button:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 20px var(--cyan); }
-
-.footer-status {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.6rem;
-  margin-top: 25px;
-  color: var(--sapphire);
-}
-
-.scanline {
-  width: 100%;
-  height: 100px;
-  z-index: 100;
-  background: linear-gradient(0deg, transparent, rgba(0, 242, 255, 0.05), transparent);
-  position: absolute;
-  animation: scan 8s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes scan { from { top: -100px; } to { top: 100%; } }
-</style>
-<script>
-// 1. Efeito Matrix (BottSapphire Style)
-const canvas = document.getElementById('matrix');
-const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-const letters = "0101010101010101010101010101010101";
-const fontSize = 14;
-const columns = canvas.width / fontSize;
-const drops = Array(Math.floor(columns)).fill(1);
-
-function drawMatrix() {
-    ctx.fillStyle = "rgba(0, 5, 10, 0.1)"; 
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#0077be"; 
-    ctx.font = fontSize + "px monospace";
-
-    drops.forEach((y, i) => {
-        const text = letters[Math.floor(Math.random() * letters.length)];
-        ctx.fillText(text, i * fontSize, y * fontSize);
-        if (y * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BottSapphire OS - Terminal</title>
+    <style>
+        /* --- ESTILOS E CORES --- */
+        :root {
+            --bg-deep: #00050a;
+            --sapphire: #0077be;
+            --cyan: #00f2ff;
+            --dark-glass: rgba(0, 10, 20, 0.9);
         }
-        drops[i]++;
-    });
-}
 
-// 2. Relógio em tempo real
-function updateClock() {
-    const clock = document.getElementById('clock');
-    if(clock) clock.innerText = new Date().toLocaleTimeString();
-}
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-deep);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: var(--cyan);
+        }
 
-// Rodar efeitos de fundo
-setInterval(drawMatrix, 50);
-setInterval(updateClock, 1000);
+        /* Fundo Matrix */
+        #matrix {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
 
-// 3. Validação de Login Real (Planilha Google Sheets)
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const userIn = e.target.querySelector('input[type="text"]').value.trim().toUpperCase();
-    const passIn = e.target.querySelector('input[type="password"]').value.trim();
-    const btn = document.getElementById('loginBtn');
-    
-    // Feedback visual de carregamento
-    btn.innerText = "VERIFICANDO...";
-    btn.style.color = "#0077be";
+        /* Efeito de Linhas de Monitor Antigo */
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 100;
+            background: linear-gradient(0deg, transparent, rgba(0, 242, 255, 0.05), transparent);
+            position: absolute;
+            animation: scan 8s linear infinite;
+            pointer-events: none;
+        }
 
-    // Link da sua planilha exportada como CSV (Aba: Constas)
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/1PWG16XF_6PhBZaF5Tqbh0WQkg7S7nY6PRHgWXSlc93o/gviz/tq?tqx=out:csv&sheet=Constas';
+        @keyframes scan { from { top: -100px; } to { top: 100%; } }
 
-    try {
-        const response = await fetch(sheetURL);
-        const csvText = await response.text();
-        
-        // Limpa as aspas e divide as linhas
-        const lines = csvText.split('\n').map(line => line.replace(/"/g, ''));
-        let autorizado = false;
+        /* Container Principal */
+        .login-frame {
+            position: relative;
+            z-index: 10;
+            width: 380px;
+            padding: 40px;
+            background: var(--dark-glass);
+            border: 1px solid var(--sapphire);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 20px rgba(0, 119, 190, 0.4);
+            text-align: center;
+            animation: border-pulse 4s infinite alternate;
+        }
 
-        // Percorre a planilha (pula a linha 0 que é o cabeçalho LOGIN/SENHA)
-        for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(',');
-            const userFile = cols[0]?.trim().toUpperCase(); // Coluna A
-            const passFile = cols[1]?.trim();               // Coluna B
+        @keyframes border-pulse {
+            from { border-color: var(--sapphire); box-shadow: 0 0 15px rgba(0, 119, 190, 0.3); }
+            to { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 242, 255, 0.5); }
+        }
 
-            if (userFile === userIn && passFile === passIn) {
-                autorizado = true;
-                break;
+        h1 {
+            font-size: 2.2rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin: 0;
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        .typing {
+            font-size: 0.8rem;
+            color: var(--sapphire);
+            margin: 10px 0 30px 0;
+            letter-spacing: 2px;
+            border-right: 2px solid var(--cyan);
+            white-space: nowrap;
+            overflow: hidden;
+            width: 19ch;
+            display: inline-block;
+            animation: type 4s steps(19) infinite alternate, blink 0.5s infinite;
+        }
+
+        @keyframes type { from { width: 0; } }
+        @keyframes blink { 50% { border-color: transparent; } }
+
+        /* Inputs e Botão */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 0.7rem; color: var(--sapphire); margin-bottom: 5px; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--sapphire);
+            color: var(--cyan);
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            letter-spacing: 2px;
+        }
+
+        button:hover { background: var(--cyan); color: var(--bg-deep); box-shadow: 0 0 20px var(--cyan); }
+
+        .footer-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            margin-top: 25px;
+            color: var(--sapphire);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix"></canvas>
+    <div class="scanline"></div>
+
+    <div class="login-frame">
+        <header>
+            <h1 class="glitch">BottSapphire</h1>
+            <div class="typing">Sistema Operacional</div>
+        </header>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label>> LOGIN</label>
+                <input type="text" placeholder="USUÁRIO" required autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label>> SENHA</label>
+                <input type="password" placeholder="********" required>
+            </div>
+
+            <button type="submit" id="loginBtn">Autenticar()</button>
+        </form>
+
+        <div class="footer-status">
+            <span>[STATUS: ONLINE]</span>
+            <span id="clock">00:00:00</span>
+        </div>
+    </div>
+
+    <script>
+        // 1. Efeito Matrix
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = "0101010101010101010101010101010101";
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 5, 10, 0.1)"; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#0077be"; 
+            ctx.font = fontSize + "px monospace";
+            drops.forEach((y, i) => {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, y * fontSize);
+                if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+        setInterval(drawMatrix, 50);
+
+        // 2. Relógio
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        // 3. Validação com Google Sheets
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userIn = e.target.querySelector('input[type="text"]').value.trim().toUpperCase();
+            const passIn = e.target.querySelector('input[type="password"]').value.trim();
+            const btn = document.getElementById('loginBtn');
+            
+            btn.innerText = "VERIFICANDO...";
+            btn.style.color = "#0077be";
+
+            // URL DA SUA PLANILHA (Certifique-se que o nome da aba seja 'Constas' ou mude abaixo)
+            const sheetURL = 'https://docs.google.com/spreadsheets/d/1PWG16XF_6PhBZaF5Tqbh0WQkg7S7nY6PRHgWXSlc93o/gviz/tq?tqx=out:csv&sheet=Constas';
+
+            try {
+                const response = await fetch(sheetURL);
+                const csvText = await response.text();
+                
+                // Divide linhas tratando quebras invisíveis (\r) e aspas do Google
+                const lines = csvText.split(/\r?\n/).map(line => line.replace(/"/g, ''));
+                let autorizado = false;
+
+                // Loop começa em 1 para pular o cabeçalho
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',');
+                    if (cols.length < 2) continue;
+
+                    const userFile = cols[0].trim().toUpperCase();
+                    const passFile = cols[1].trim();
+
+                    if (userFile === userIn && passFile === passIn) {
+                        autorizado = true;
+                        break;
+                    }
+                }
+
+                if (autorizado) {
+                    btn.innerText = "ACESSO CONCEDIDO";
+                    btn.style.color = "#00f2ff";
+                    btn.style.borderColor = "#00f2ff";
+                    setTimeout(() => { window.location.href = "OS.html"; }, 1000);
+                } else {
+                    throw new Error();
+                }
+
+            } catch (err) {
+                btn.innerText = "ACESSO NEGADO";
+                btn.style.color = "red";
+                btn.style.borderColor = "red";
+                setTimeout(() => {
+                    btn.innerText = "Autenticar()";
+                    btn.style.color = "#00f2ff";
+                    btn.style.borderColor = "#00f2ff";
+                }, 2000);
             }
-        }
-
-        if (autorizado) {
-            btn.innerText = "ACESSO CONCEDIDO";
-            btn.style.color = "#00f2ff";
-            btn.style.borderColor = "#00f2ff";
-            
-            // Redireciona para a página principal do seu sistema
-            setTimeout(() => {
-                window.location.href = "OS.html"; 
-            }, 1000);
-            
-        } else {
-            throw new Error("Credenciais Inválidas");
-        }
-
-    } catch (err) {
-        btn.innerText = "ERRO: ACESSO NEGADO";
-        btn.style.color = "red";
-        btn.style.borderColor = "red";
-        
-        setTimeout(() => {
-            btn.innerText = "Acessar";
-            btn.style.color = "#00f2ff";
-            btn.style.borderColor = "#00f2ff";
-        }, 2000);
-    }
-});
-</script>
+        });
+    </script>
+</body>
+</html>
