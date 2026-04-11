@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BottSapphire OS - Terminal</title>
     <style>
-        /* --- ESTILOS E CORES --- */
         :root {
             --bg-deep: #00050a;
             --sapphire: #0077be;
@@ -14,52 +13,28 @@
         }
 
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--bg-deep);
             font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            color: var(--cyan);
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; color: var(--cyan);
         }
 
-        /* Fundo Matrix */
-        #matrix {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
+        #matrix { position: fixed; top: 0; left: 0; z-index: 1; }
 
-        /* Efeito de Linhas de Monitor Antigo */
         .scanline {
-            width: 100%;
-            height: 100px;
-            z-index: 100;
+            width: 100%; height: 100px; z-index: 100;
             background: linear-gradient(0deg, transparent, rgba(0, 242, 255, 0.05), transparent);
-            position: absolute;
-            animation: scan 8s linear infinite;
-            pointer-events: none;
+            position: absolute; animation: scan 8s linear infinite; pointer-events: none;
         }
 
         @keyframes scan { from { top: -100px; } to { top: 100%; } }
 
-        /* Container Principal */
         .login-frame {
-            position: relative;
-            z-index: 10;
-            width: 380px;
-            padding: 40px;
-            background: var(--dark-glass);
-            border: 1px solid var(--sapphire);
-            backdrop-filter: blur(8px);
-            box-shadow: 0 0 20px rgba(0, 119, 190, 0.4);
-            text-align: center;
-            animation: border-pulse 4s infinite alternate;
+            position: relative; z-index: 10; width: 380px; padding: 40px;
+            background: var(--dark-glass); border: 1px solid var(--sapphire);
+            backdrop-filter: blur(8px); box-shadow: 0 0 20px rgba(0, 119, 190, 0.4);
+            text-align: center; animation: border-pulse 4s infinite alternate;
         }
 
         @keyframes border-pulse {
@@ -67,71 +42,39 @@
             to { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 242, 255, 0.5); }
         }
 
-        h1 {
-            font-size: 2.2rem;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            margin: 0;
-            text-shadow: 0 0 10px var(--cyan);
-        }
+        h1 { font-size: 2.2rem; letter-spacing: 5px; text-transform: uppercase; margin: 0; text-shadow: 0 0 10px var(--cyan); }
 
         .typing {
-            font-size: 0.8rem;
-            color: var(--sapphire);
-            margin: 10px 0 30px 0;
-            letter-spacing: 2px;
-            border-right: 2px solid var(--cyan);
-            white-space: nowrap;
-            overflow: hidden;
-            width: 19ch;
-            display: inline-block;
-            animation: type 4s steps(19) infinite alternate, blink 0.5s infinite;
+            font-size: 0.8rem; color: var(--sapphire); margin: 10px 0 30px 0;
+            letter-spacing: 2px; border-right: 2px solid var(--cyan);
+            white-space: nowrap; overflow: hidden; width: 19ch;
+            display: inline-block; animation: type 4s steps(19) infinite alternate, blink 0.5s infinite;
         }
 
         @keyframes type { from { width: 0; } }
         @keyframes blink { 50% { border-color: transparent; } }
 
-        /* Inputs e Botão */
         .input-group { margin-bottom: 20px; text-align: left; }
         label { display: block; font-size: 0.7rem; color: var(--sapphire); margin-bottom: 5px; }
 
         input {
-            width: 100%;
-            padding: 12px;
-            background: rgba(0,0,0,0.6);
-            border: 1px solid var(--sapphire);
-            color: var(--cyan);
-            font-family: 'Courier New', monospace;
-            box-sizing: border-box;
-            outline: none;
+            width: 100%; padding: 12px; background: rgba(0,0,0,0.6);
+            border: 1px solid var(--sapphire); color: var(--cyan);
+            font-family: 'Courier New', monospace; box-sizing: border-box; outline: none;
         }
 
         input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
 
         button {
-            width: 100%;
-            padding: 15px;
-            background: transparent;
-            border: 1px solid var(--cyan);
-            color: var(--cyan);
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: 0.3s;
-            letter-spacing: 2px;
+            width: 100%; padding: 15px; background: transparent;
+            border: 1px solid var(--cyan); color: var(--cyan);
+            font-family: 'Courier New', monospace; font-weight: bold;
+            text-transform: uppercase; cursor: pointer; transition: 0.3s; letter-spacing: 2px;
         }
 
         button:hover { background: var(--cyan); color: var(--bg-deep); box-shadow: 0 0 20px var(--cyan); }
 
-        .footer-status {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.65rem;
-            margin-top: 25px;
-            color: var(--sapphire);
-            opacity: 0.8;
-        }
+        .footer-status { display: flex; justify-content: space-between; font-size: 0.65rem; margin-top: 25px; color: var(--sapphire); opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -148,12 +91,12 @@
         <form id="loginForm">
             <div class="input-group">
                 <label>> LOGIN</label>
-                <input type="text" placeholder="USUÁRIO" required autocomplete="off">
+                <input type="text" id="userInput" placeholder="USUÁRIO" required autocomplete="off">
             </div>
 
             <div class="input-group">
                 <label>> SENHA</label>
-                <input type="password" placeholder="********" required>
+                <input type="password" id="passInput" placeholder="********" required>
             </div>
 
             <button type="submit" id="loginBtn">Autenticar()</button>
@@ -166,12 +109,11 @@
     </div>
 
     <script>
-        // 1. Efeito Matrix
+        // --- EFEITOS VISUAIS ---
         const canvas = document.getElementById('matrix');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
         const letters = "0101010101010101010101010101010101";
         const fontSize = 14;
         const columns = canvas.width / fontSize;
@@ -190,41 +132,42 @@
             });
         }
         setInterval(drawMatrix, 50);
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-        // 2. Relógio
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
-
-        // 3. Validação com Google Sheets
+        // --- LÓGICA DE LOGIN ---
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const userIn = e.target.querySelector('input[type="text"]').value.trim().toUpperCase();
-            const passIn = e.target.querySelector('input[type="password"]').value.trim();
+            const userIn = document.getElementById('userInput').value.trim().toUpperCase();
+            const passIn = document.getElementById('passInput').value.trim();
             const btn = document.getElementById('loginBtn');
             
-            btn.innerText = "VERIFICANDO...";
-            btn.style.color = "#0077be";
+            btn.innerText = "RASTREAMENTO...";
 
-            // URL DA SUA PLANILHA (Certifique-se que o nome da aba seja 'Constas' ou mude abaixo)
+            // URL CORRIGIDA PARA EXPORTAÇÃO CSV DIRETA
             const sheetURL = 'https://docs.google.com/spreadsheets/d/1PWG16XF_6PhBZaF5Tqbh0WQkg7S7nY6PRHgWXSlc93o/gviz/tq?tqx=out:csv&sheet=Constas';
 
             try {
                 const response = await fetch(sheetURL);
+                if (!response.ok) throw new Error("Erro ao conectar na planilha");
+
                 const csvText = await response.text();
                 
-                // Divide linhas tratando quebras invisíveis (\r) e aspas do Google
+                // Limpeza agressiva: divide linhas e remove aspas e caracteres de retorno (\r)
                 const lines = csvText.split(/\r?\n/).map(line => line.replace(/"/g, ''));
+                
                 let autorizado = false;
 
-                // Loop começa em 1 para pular o cabeçalho
+                // Percorre a planilha (pula a linha 1 do cabeçalho)
                 for (let i = 1; i < lines.length; i++) {
                     const cols = lines[i].split(',');
                     if (cols.length < 2) continue;
 
                     const userFile = cols[0].trim().toUpperCase();
                     const passFile = cols[1].trim();
+
+                    // DEBUG: Se quiser ver no console o que ele está lendo, aperte F12 no navegador
+                    // console.log(`Comparando: [${userIn}] com [${userFile}]`);
 
                     if (userFile === userIn && passFile === passIn) {
                         autorizado = true;
@@ -238,10 +181,11 @@
                     btn.style.borderColor = "#00f2ff";
                     setTimeout(() => { window.location.href = "OS.html"; }, 1000);
                 } else {
-                    throw new Error();
+                    throw new Error("Credenciais incorretas");
                 }
 
             } catch (err) {
+                console.error("Falha no login:", err);
                 btn.innerText = "ACESSO NEGADO";
                 btn.style.color = "red";
                 btn.style.borderColor = "red";
