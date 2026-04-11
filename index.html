@@ -148,12 +148,16 @@ button:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 20px v
 @keyframes scan { from { top: -100px; } to { top: 100%; } }
 </style>
 <script>
-// 1. Efeito Matrix
+// 1. Efeito Matrix (BottSapphire Style)
 const canvas = document.getElementById('matrix');
 const ctx = canvas.getContext('2d');
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 const letters = "0101010101010101010101010101010101";
 const fontSize = 14;
@@ -161,45 +165,90 @@ const columns = canvas.width / fontSize;
 const drops = Array(Math.floor(columns)).fill(1);
 
 function drawMatrix() {
-  ctx.fillStyle = "rgba(0, 5, 10, 0.1)"; // Rastro da chuva
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  ctx.fillStyle = "#0077be"; // Azul Safira
-  ctx.font = fontSize + "px monospace";
+    ctx.fillStyle = "rgba(0, 5, 10, 0.1)"; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#0077be"; 
+    ctx.font = fontSize + "px monospace";
 
-  drops.forEach((y, i) => {
-    const text = letters[Math.floor(Math.random() * letters.length)];
-    ctx.fillText(text, i * fontSize, y * fontSize);
-    
-    if (y * fontSize > canvas.height && Math.random() > 0.975) {
-      drops[i] = 0;
-    }
-    drops[i]++;
-  });
+    drops.forEach((y, i) => {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(text, i * fontSize, y * fontSize);
+        if (y * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    });
 }
 
 // 2. Relógio em tempo real
 function updateClock() {
-  const clock = document.getElementById('clock');
-  clock.innerText = new Date().toLocaleTimeString();
+    const clock = document.getElementById('clock');
+    if(clock) clock.innerText = new Date().toLocaleTimeString();
 }
 
-// Rodar tudo
+// Rodar efeitos de fundo
 setInterval(drawMatrix, 50);
 setInterval(updateClock, 1000);
 
-// Simular erro no botão
-document.getElementById('loginForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('loginBtn');
-  btn.innerText = "ERRO: ACESSO NEGADO";
-  btn.style.color = "red";
-  btn.style.borderColor = "red";
-  
-  setTimeout(() => {
-    btn.innerText = "Autenticar()";
-    btn.style.color = "#00f2ff";
-    btn.style.borderColor = "#00f2ff";
-  }, 2000);
+// 3. Validação de Login Real (Planilha Google Sheets)
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const userIn = e.target.querySelector('input[type="text"]').value.trim().toUpperCase();
+    const passIn = e.target.querySelector('input[type="password"]').value.trim();
+    const btn = document.getElementById('loginBtn');
+    
+    // Feedback visual de carregamento
+    btn.innerText = "VERIFICANDO...";
+    btn.style.color = "#0077be";
+
+    // Link da sua planilha exportada como CSV (Aba: Constas)
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/1PWG16XF_6PhBZaF5Tqbh0WQkg7S7nY6PRHgWXSlc93o/gviz/tq?tqx=out:csv&sheet=Constas';
+
+    try {
+        const response = await fetch(sheetURL);
+        const csvText = await response.text();
+        
+        // Limpa as aspas e divide as linhas
+        const lines = csvText.split('\n').map(line => line.replace(/"/g, ''));
+        let autorizado = false;
+
+        // Percorre a planilha (pula a linha 0 que é o cabeçalho LOGIN/SENHA)
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',');
+            const userFile = cols[0]?.trim().toUpperCase(); // Coluna A
+            const passFile = cols[1]?.trim();               // Coluna B
+
+            if (userFile === userIn && passFile === passIn) {
+                autorizado = true;
+                break;
+            }
+        }
+
+        if (autorizado) {
+            btn.innerText = "ACESSO CONCEDIDO";
+            btn.style.color = "#00f2ff";
+            btn.style.borderColor = "#00f2ff";
+            
+            // Redireciona para a página principal do seu sistema
+            setTimeout(() => {
+                window.location.href = "OS.html"; 
+            }, 1000);
+            
+        } else {
+            throw new Error("Credenciais Inválidas");
+        }
+
+    } catch (err) {
+        btn.innerText = "ERRO: ACESSO NEGADO";
+        btn.style.color = "red";
+        btn.style.borderColor = "red";
+        
+        setTimeout(() => {
+            btn.innerText = "Acessar";
+            btn.style.color = "#00f2ff";
+            btn.style.borderColor = "#00f2ff";
+        }, 2000);
+    }
 });
 </script>
