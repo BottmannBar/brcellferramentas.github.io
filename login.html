@@ -27,7 +27,7 @@
     <span id="clock">00:00:00</span>
   </div>
 </div>
-
+<style>
 :root {
   --bg: #00050a;
   --sapphire: #0077be;
@@ -146,7 +146,8 @@ button:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 20px v
 }
 
 @keyframes scan { from { top: -100px; } to { top: 100%; } }
-
+</style>
+<script>
 // 1. Efeito Matrix
 const canvas = document.getElementById('matrix');
 const ctx = canvas.getContext('2d');
@@ -201,3 +202,4 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
     btn.style.borderColor = "#00f2ff";
   }, 2000);
 });
+</script>
