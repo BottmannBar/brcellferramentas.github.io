@@ -142,32 +142,31 @@
             const passIn = document.getElementById('passInput').value.trim();
             const btn = document.getElementById('loginBtn');
             
-            btn.innerText = "RASTREAMENTO...";
+            btn.innerText = "SINCRO_DATA...";
 
-            // URL CORRIGIDA PARA EXPORTAÇÃO CSV DIRETA
-            const sheetURL = 'https://docs.google.com/spreadsheets/d/1PWG16XF_6PhBZaF5Tqbh0WQkg7S7nY6PRHgWXSlc93o/gviz/tq?tqx=out:csv&sheet=Constas';
+            // LINK APONTANDO PARA A ABA "L" DA SUA PLANILHA
+            const sheetURL = 'https://docs.google.com/spreadsheets/d/1PWG16XF_6PhBZaF5Tqbh0WQkg7S7nY6PRHgWXSlc93o/gviz/tq?tqx=out:csv&sheet=L';
 
             try {
                 const response = await fetch(sheetURL);
-                if (!response.ok) throw new Error("Erro ao conectar na planilha");
+                
+                // Se o Google redirecionar para Login, o fetch vai falhar aqui (CORS)
+                if (!response.ok) throw new Error("Acesso negado pela planilha (Verifique o Compartilhamento)");
 
                 const csvText = await response.text();
                 
-                // Limpeza agressiva: divide linhas e remove aspas e caracteres de retorno (\r)
+                // Limpeza: remove aspas e trata quebras de linha (\r)
                 const lines = csvText.split(/\r?\n/).map(line => line.replace(/"/g, ''));
                 
                 let autorizado = false;
 
-                // Percorre a planilha (pula a linha 1 do cabeçalho)
+                // Percorre a planilha começando da linha 1 (pula o cabeçalho)
                 for (let i = 1; i < lines.length; i++) {
                     const cols = lines[i].split(',');
                     if (cols.length < 2) continue;
 
                     const userFile = cols[0].trim().toUpperCase();
                     const passFile = cols[1].trim();
-
-                    // DEBUG: Se quiser ver no console o que ele está lendo, aperte F12 no navegador
-                    // console.log(`Comparando: [${userIn}] com [${userFile}]`);
 
                     if (userFile === userIn && passFile === passIn) {
                         autorizado = true;
@@ -181,14 +180,20 @@
                     btn.style.borderColor = "#00f2ff";
                     setTimeout(() => { window.location.href = "OS.html"; }, 1000);
                 } else {
-                    throw new Error("Credenciais incorretas");
+                    throw new Error("Usuário ou Senha não encontrados na aba L");
                 }
 
             } catch (err) {
-                console.error("Falha no login:", err);
+                console.error("Erro no Processo:", err);
                 btn.innerText = "ACESSO NEGADO";
                 btn.style.color = "red";
                 btn.style.borderColor = "red";
+                
+                // Feedback visual do erro para você saber o que houve
+                if (err.message.includes("fetch")) {
+                   alert("Erro de Conexão: Certifique-se que a planilha está 'Pública' (Qualquer pessoa com o link).");
+                }
+
                 setTimeout(() => {
                     btn.innerText = "Autenticar()";
                     btn.style.color = "#00f2ff";
