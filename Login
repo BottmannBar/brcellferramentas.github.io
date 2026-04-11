@@ -1,0 +1,203 @@
+<canvas id="matrix"></canvas>
+
+<div class="scanline"></div>
+
+<div class="login-frame">
+  <header>
+    <h1 class="glitch" data-text="BottSapphire">BottSapphire</h1>
+    <div class="typing">Sistema Operacional</div>
+  </header>
+
+  <form id="loginForm">
+    <div class="input-group">
+      <label>> IDENTIFICAÇÃO_USUÁRIO</label>
+      <input type="text" placeholder="LOGIN_ID" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="input-group">
+      <label>> CHAVE_CRIPTOGRÁFICA</label>
+      <input type="password" placeholder="********">
+    </div>
+
+    <button type="submit" id="loginBtn">Autenticar()</button>
+  </form>
+
+  <div class="footer-status">
+    <span>[STATUS: ENCRIPTADO]</span>
+    <span id="clock">00:00:00</span>
+  </div>
+</div>
+
+:root {
+  --bg: #00050a;
+  --sapphire: #0077be;
+  --cyan: #00f2ff;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+}
+
+/* Fundo Matrix */
+#matrix {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* Container de Login */
+.login-frame {
+  position: relative;
+  z-index: 10;
+  width: 380px;
+  padding: 40px;
+  background: rgba(0, 10, 20, 0.85);
+  border: 1px solid var(--sapphire);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 20px rgba(0, 119, 190, 0.4);
+  animation: pulse 4s infinite alternate;
+}
+
+@keyframes pulse {
+  from { border-color: var(--sapphire); box-shadow: 0 0 15px rgba(0, 119, 190, 0.3); }
+  to { border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 242, 255, 0.5); }
+}
+
+h1 {
+  font-size: 2.2rem;
+  color: var(--cyan);
+  text-align: center;
+  margin: 0;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.typing {
+  color: var(--sapphire);
+  text-align: center;
+  font-size: 0.8rem;
+  margin-bottom: 30px;
+  letter-spacing: 2px;
+  border-right: 2px solid var(--cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  width: 19ch;
+  margin-left: auto;
+  margin-right: auto;
+  animation: type 4s steps(19) infinite, blink 0.5s infinite;
+}
+
+@keyframes type { from { width: 0; } }
+@keyframes blink { 50% { border-color: transparent; } }
+
+.input-group { margin-bottom: 20px; }
+label { display: block; color: var(--sapphire); font-size: 0.7rem; margin-bottom: 5px; }
+
+input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--sapphire);
+  color: var(--cyan);
+  box-sizing: border-box;
+  outline: none;
+}
+
+input:focus { border-color: var(--cyan); }
+
+button {
+  width: 100%;
+  padding: 15px;
+  background: transparent;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: 0.3s;
+}
+
+button:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 20px var(--cyan); }
+
+.footer-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  margin-top: 25px;
+  color: var(--sapphire);
+}
+
+.scanline {
+  width: 100%;
+  height: 100px;
+  z-index: 100;
+  background: linear-gradient(0deg, transparent, rgba(0, 242, 255, 0.05), transparent);
+  position: absolute;
+  animation: scan 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scan { from { top: -100px; } to { top: 100%; } }
+
+// 1. Efeito Matrix
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const letters = "0101010101010101010101010101010101";
+const fontSize = 14;
+const columns = canvas.width / fontSize;
+const drops = Array(Math.floor(columns)).fill(1);
+
+function drawMatrix() {
+  ctx.fillStyle = "rgba(0, 5, 10, 0.1)"; // Rastro da chuva
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.fillStyle = "#0077be"; // Azul Safira
+  ctx.font = fontSize + "px monospace";
+
+  drops.forEach((y, i) => {
+    const text = letters[Math.floor(Math.random() * letters.length)];
+    ctx.fillText(text, i * fontSize, y * fontSize);
+    
+    if (y * fontSize > canvas.height && Math.random() > 0.975) {
+      drops[i] = 0;
+    }
+    drops[i]++;
+  });
+}
+
+// 2. Relógio em tempo real
+function updateClock() {
+  const clock = document.getElementById('clock');
+  clock.innerText = new Date().toLocaleTimeString();
+}
+
+// Rodar tudo
+setInterval(drawMatrix, 50);
+setInterval(updateClock, 1000);
+
+// Simular erro no botão
+document.getElementById('loginForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  btn.innerText = "ERRO: ACESSO NEGADO";
+  btn.style.color = "red";
+  btn.style.borderColor = "red";
+  
+  setTimeout(() => {
+    btn.innerText = "Autenticar()";
+    btn.style.color = "#00f2ff";
+    btn.style.borderColor = "#00f2ff";
+  }, 2000);
+});
