@@ -109,7 +109,7 @@
     </div>
 
     <script>
-        // --- EFEITOS VISUAIS ---
+        // 1. Matrix Background
         const canvas = document.getElementById('matrix');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
@@ -134,7 +134,7 @@
         setInterval(drawMatrix, 50);
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-        // --- LÓGICA DE LOGIN ---
+        // 2. Validação com Google Sheets (Planilha KNOX - Aba L)
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -142,25 +142,23 @@
             const passIn = document.getElementById('passInput').value.trim();
             const btn = document.getElementById('loginBtn');
             
-            btn.innerText = "SINCRO_DATA...";
+            btn.innerText = "VERIFICANDO...";
+            btn.style.color = "#0077be";
 
-            // LINK APONTANDO PARA A ABA "L" DA SUA PLANILHA
+            // Link apontando para a aba "L" da sua planilha KNOX
             const sheetURL = 'https://docs.google.com/spreadsheets/d/1PWG16XF_6PhBZaF5Tqbh0WQkg7S7nY6PRHgWXSlc93o/gviz/tq?tqx=out:csv&sheet=L';
 
             try {
                 const response = await fetch(sheetURL);
-                
-                // Se o Google redirecionar para Login, o fetch vai falhar aqui (CORS)
-                if (!response.ok) throw new Error("Acesso negado pela planilha (Verifique o Compartilhamento)");
+                if (!response.ok) throw new Error("Erro ao conectar na planilha");
 
                 const csvText = await response.text();
-                
-                // Limpeza: remove aspas e trata quebras de linha (\r)
+                // Limpa aspas e trata quebras de linha invisíveis (\r)
                 const lines = csvText.split(/\r?\n/).map(line => line.replace(/"/g, ''));
                 
                 let autorizado = false;
 
-                // Percorre a planilha começando da linha 1 (pula o cabeçalho)
+                // Loop para checar usuário e senha (pula o cabeçalho)
                 for (let i = 1; i < lines.length; i++) {
                     const cols = lines[i].split(',');
                     if (cols.length < 2) continue;
@@ -178,22 +176,19 @@
                     btn.innerText = "ACESSO CONCEDIDO";
                     btn.style.color = "#00f2ff";
                     btn.style.borderColor = "#00f2ff";
-                    setTimeout(() => { window.location.href = "OS.html"; }, 1000);
+                    
+                    // REDIRECIONAMENTO PARA home.html
+                    setTimeout(() => { 
+                        window.location.href = "home.html"; 
+                    }, 1000);
                 } else {
-                    throw new Error("Usuário ou Senha não encontrados na aba L");
+                    throw new Error("Dados incorretos");
                 }
 
             } catch (err) {
-                console.error("Erro no Processo:", err);
                 btn.innerText = "ACESSO NEGADO";
                 btn.style.color = "red";
                 btn.style.borderColor = "red";
-                
-                // Feedback visual do erro para você saber o que houve
-                if (err.message.includes("fetch")) {
-                   alert("Erro de Conexão: Certifique-se que a planilha está 'Pública' (Qualquer pessoa com o link).");
-                }
-
                 setTimeout(() => {
                     btn.innerText = "Autenticar()";
                     btn.style.color = "#00f2ff";
