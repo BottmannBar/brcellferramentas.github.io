@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRCELL | Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --brcell-green: #00ff88;
+            --deep-black: #050a0e;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(0, 255, 136, 0.2);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            background: var(--deep-black);
+            background-image: radial-gradient(circle at 50% 50%, #00331a 0%, #050a0e 100%);
+            font-family: 'Inter', sans-serif;
+            color: white;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        .header-logo { width: 100%; padding: 60px 20px; display: flex; justify-content: center; overflow: hidden; }
+        .logo-text {
+            font-size: 3.5rem; font-weight: 900; letter-spacing: 8px; text-transform: uppercase;
+            transform: translateX(-150%); animation: slideReveal 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        .logo-text span { color: var(--brcell-green); }
+
+        @keyframes slideReveal { to { transform: translateX(0); } }
+
+        .nav-container { width: 100%; max-width: 900px; padding: 0 20px 60px 20px; display: flex; flex-direction: column; gap: 20px; }
+
+        .menu-item {
+            width: 100%; height: 80px; background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: 15px; display: flex; align-items: center; padding: 0 40px;
+            text-decoration: none; color: white; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px); opacity: 0; transform: translateY(30px);
+            animation: fadeInBtn 0.6s ease forwards;
+        }
+
+        .menu-item i { font-size: 1.8rem; color: var(--brcell-green); margin-right: 25px; width: 40px; text-align: center; }
+        .menu-item span { font-size: 1.2rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 136, 0.1); border-color: var(--brcell-green);
+            transform: scale(1.02); box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+        }
+
+        @keyframes fadeInBtn { to { opacity: 1; transform: translateY(0); } }
+
+        .status-bar {
+            margin-top: auto; width: 100%; padding: 15px; background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid var(--glass-border); display: flex; justify-content: space-around;
+            font-size: 0.7rem; color: var(--brcell-green); text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header-logo">
+        <div class="logo-text">BR<span>CELL</span></div>
+    </header>
+
+    <nav class="nav-container" id="menu-links"></nav>
+
+    <footer class="status-bar">
+        <span>● Sistema Online</span>
+        <span>Unidade Curitiba - Centro</span>
+        <span>v2.0 Beta</span>
+    </footer>
+
+    <script>
+        // LISTA DE PÁGINAS BASEADA NO SEU GITHUB
+        const CONFIG_PAGINAS = [
+            { nome: "Venda",              url: "Simulador.html",   icone: "fas fa-shopping-cart" },
+            { nome: "Serviço",            url: "serviço.html",     icone: "fas fa-tools" },
+            { nome: "Estoque",            url: "OS.html",          icone: "fas fa-boxes-stacked" },
+            { nome: "Cartão de Celular",  url: "cartao.html",      icone: "fas fa-mobile-screen-button" },
+            { nome: "WhatsApp",           url: "https://wa.me/5541999999999", icone: "fab fa-whatsapp", destaque: "#25d366" }
+        ];
+
+        const menuContainer = document.getElementById('menu-links');
+
+        CONFIG_PAGINAS.forEach((pagina, index) => {
+            const link = document.createElement('a');
+            link.href = pagina.url;
+            link.className = 'menu-item';
+            link.style.animationDelay = `${(index + 1) * 0.15}s`;
+
+            if (pagina.destaque) {
+                link.style.borderLeft = `5px solid ${pagina.destaque}`;
+            }
+
+            link.innerHTML = `
+                <i class="${pagina.icone}" ${pagina.destaque ? `style="color: ${pagina.destaque}"` : ''}></i>
+                <span>${pagina.nome}</span>
+            `;
+
+            menuContainer.appendChild(link);
+        });
+    </script>
+</body>
+</html>
