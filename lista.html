@@ -1,121 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRCELL — Estoque Premium Lab Services</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black:    #0f0f0f;
+      --graphite: #1a1a1a;
+      --card:     #212121;
+      --row-alt:  #1e1e1e;
+      --green:    #28a745;
+      --green-dim:#1d7a34;
+      --green-glow: rgba(40,167,69,0.18);
+      --text:     #e8e8e8;
+      --muted:    #8a8a8a;
+      --border:   rgba(40,167,69,0.15);
+      --divider:  rgba(255,255,255,0.05);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--black);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      /* subtle grid texture */
+      background-image:
+        linear-gradient(var(--divider) 1px, transparent 1px),
+        linear-gradient(90deg, var(--divider) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ── HEADER ───────────────────────────────────────────── */
+    header {
+      background: var(--graphite);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 40px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .logo-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      letter-spacing: 4px;
+      line-height: 1;
+      color: #fff;
+      text-shadow: 0 0 30px var(--green-glow);
+    }
+
+    .logo-tag {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--green);
+      border: 1px solid var(--green);
+      padding: 3px 8px;
+      border-radius: 3px;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .header-sub span {
+      display: block;
+      font-size: 10px;
+      color: var(--green);
+      margin-top: 3px;
+    }
+
+
+
+    /* ── TOOLBAR ──────────────────────────────────────────── */
+    .toolbar {
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+      max-width: 360px;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--graphite);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 9px 12px 9px 36px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px var(--green-glow);
+    }
+
+    .search-input::placeholder { color: var(--muted); }
+
+    .filter-select {
+      background: var(--graphite);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 9px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .filter-select:focus { border-color: var(--green); }
+
+    .count-badge {
+      margin-left: auto;
+      background: var(--green-glow);
+      border: 1px solid var(--border);
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+
+    /* ── TABLE WRAPPER ────────────────────────────────────── */
+    .table-wrap {
+      padding: 0 40px 40px;
+    }
+
+    .table-container {
+      background: var(--graphite);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(40,167,69,0.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    /* ── THEAD ────────────────────────────────────────────── */
+    thead tr {
+      background: linear-gradient(135deg, var(--green-dim) 0%, var(--green) 100%);
+    }
+
+    thead th {
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #fff;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    thead th:hover { background: rgba(255,255,255,0.1); }
+
+    thead th .th-inner {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    thead th .sort-icon {
+      opacity: 0.5;
+      font-size: 9px;
+    }
+
+    thead th.sorted .sort-icon { opacity: 1; }
+
+    /* ── TBODY ────────────────────────────────────────────── */
+    tbody tr {
+      border-bottom: 1px solid var(--divider);
+      transition: background 0.15s, transform 0.1s;
+      animation: fadeRow 0.3s ease both;
+    }
+
+    @keyframes fadeRow {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+    tbody tr:nth-child(odd)  { background: var(--graphite); }
+
+    tbody tr:hover {
+      background: rgba(40,167,69,0.07) !important;
+      border-color: var(--border);
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody td {
+      padding: 13px 20px;
+      vertical-align: middle;
+    }
+
+    /* ── CELLS ────────────────────────────────────────────── */
+    .cell-brand {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .cell-device {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .cell-storage {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 5px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .cell-color {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+
+    .cell-price {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--green);
+      white-space: nowrap;
+      text-shadow: 0 0 12px var(--green-glow);
+    }
+
+    /* ── WHATSAPP BUTTON ──────────────────────────────────── */
+    .wa-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #128c3e;
+      color: #fff;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      padding: 7px 14px;
+      border-radius: 20px;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 2px 10px rgba(18,140,62,0.25);
+    }
+
+    .wa-btn:hover {
+      background: #25d366;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 18px rgba(37,211,102,0.4);
+    }
+
+    .wa-btn:active { transform: translateY(0); }
+
+    /* ── EMPTY STATE ──────────────────────────────────────── */
+    .empty-row td {
+      text-align: center;
+      padding: 60px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .empty-row td svg { display: block; margin: 0 auto 12px; opacity: 0.3; }
+
+    /* ── FOOTER ───────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 20px 40px;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      border-top: 1px solid var(--divider);
+    }
+
+    footer strong { color: var(--green); }
+
+    /* ── RESPONSIVE ───────────────────────────────────────── */
+    @media (max-width: 768px) {
+      header { padding: 16px 20px; flex-direction: column; align-items: flex-start; }
+      .logo-name { font-size: 36px; }
+      .header-sub { text-align: left; }
+      .stats-bar { display: grid; grid-template-columns: 1fr 1fr; }
+      .toolbar, .table-wrap { padding-left: 16px; padding-right: 16px; }
+      thead th, tbody td { padding: 10px 14px; }
+      .cell-price { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-block">
+    <div class="logo-name">BRCELL</div>
+    <div class="logo-tag">Premium</div>
+  </div>
+  <div class="header-sub">
+    Estoque de Aparelhos
+    <span>Premium Lab Services</span>
+  </div>
+</header>
+
+
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input class="search-input" id="searchInput" type="text" placeholder="Buscar aparelho, marca, cor…" />
+  </div>
+  <select class="filter-select" id="brandFilter">
+    <option value="">Todas as marcas</option>
+  </select>
+  <select class="filter-select" id="storageFilter">
+    <option value="">Todo armazenamento</option>
+  </select>
+  <div class="count-badge" id="countBadge">0 itens</div>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <div class="table-container">
+    <table id="stockTable">
+      <thead>
+        <tr>
+          <th data-col="marca"        onclick="sortTable('marca')">       <div class="th-inner">Marca          <span class="sort-icon">⇅</span></div></th>
+          <th data-col="aparelho"     onclick="sortTable('aparelho')">    <div class="th-inner">Aparelho        <span class="sort-icon">⇅</span></div></th>
+          <th data-col="armazenamento" onclick="sortTable('armazenamento')"><div class="th-inner">Armazenamento  <span class="sort-icon">⇅</span></div></th>
+          <th data-col="cor"          onclick="sortTable('cor')">         <div class="th-inner">Cor             <span class="sort-icon">⇅</span></div></th>
+          <th data-col="preco"        onclick="sortTable('preco')">       <div class="th-inner">Preço           <span class="sort-icon">⇅</span></div></th>
+          <th style="text-align:center"><div class="th-inner" style="justify-content:center">Contato</div></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  Atualizado em <strong id="footerDate"></strong> &nbsp;·&nbsp; <strong>BRCELL</strong> Premium Lab Services &nbsp;·&nbsp; Uso interno
+</footer>
+
 <script>
-  // 1. INSIRA SEU LINK DO GOOGLE SHEETS AQUI (O link que termina em .csv)
-  const SHEET_CSV_URL = 'COLE_AQUI_O_LINK_DA_PLANILHA_PUBLICADA';
-  const WHATSAPP_NUMBER = "5541999999999"; // Coloque o número da BRCELL aqui
+  /* ══════════════════════════════════════════════════════════
+     CONFIGURAÇÕES — edite aqui
+  ══════════════════════════════════════════════════════════ */
+  const SHEET_ID  = "1sRrPvd9Vk77rrCA78yUG1L3G-xO-1vy_pgdrbrfLGKE";
+  const SHEET_TAB = "COPIAR";
+  const WA_NUMBER = "5541997589418"; // ← troque pelo número da loja (ex: 5511999998888)
 
-  let STOCK = [];
-  let sortCol = "preco", sortDir = 1;
+  // Índices das colunas na planilha (0 = coluna A)
+  // A=Marca  C=Aparelho  D=Armazenamento  E=Cor  O=Preço
+  const COL = { marca: 0, aparelho: 2, armazenamento: 3, cor: 4, preco: 14 };
 
-  async function loadSheetData() {
-    try {
-      const response = await fetch(SHEET_CSV_URL);
-      const csvText = await response.text();
-      
-      // Converte CSV em Array de Objetos
-      const rows = csvText.split('\n').map(row => row.split(','));
-      
-      // Mapeia as colunas conforme seu pedido: A(0), C(2), D(3), E(4), O(14)
-      // Pulamos a primeira linha (cabeçalho) começando do index 1
-      STOCK = rows.slice(1).filter(row => row[2]).map(row => ({
-        marca: row[0]?.trim(),
-        aparelho: row[2]?.trim(),
-        armazenamento: row[3]?.trim(),
-        cor: row[4]?.trim(),
-        preco: parseFloat(row[14]?.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
-      }));
+  /* ── CSV URL ── */
+  const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
 
-      populateFilters();
-      render();
-    } catch (err) {
-      console.error("Erro ao carregar planilha:", err);
-      document.getElementById("tableBody").innerHTML = "<tr><td colspan='6' style='text-align:center; padding: 40px;'>Erro ao conectar com a planilha. Verifique se ela foi publicada corretamente.</td></tr>";
-    }
-  }
+  /* ── colour map for the dot ── */
+  const COLOR_MAP = {
+    "preto":"#1a1a1a","black":"#1a1a1a","meia-noite":"#1c1c1e","onyx black":"#1a1a1a",
+    "phantom black":"#1a1a1a","midnight black":"#1a1a1a","black beauty":"#1a1a1a",
+    "branco":"#f5f5f5","white":"#f5f5f5","titanium white":"#f0eeec","titânio natural":"#e8e2d8",
+    "titânio branco":"#f0eeec","marble gray":"#c8c8c8","koala gray":"#9a9a9a",
+    "urban gray":"#7a7a7a","titânio cinza":"#8a8a8a","titânio preto":"#2a2a2a",
+    "azul":"#3a8ecc","blue":"#3a8ecc","titânio azul":"#5b8db8","awesome navy":"#1b3a6e",
+    "cobalt violet":"#5c4db1","lavender":"#c9b8e8","roxo profundo":"#4a2c6e",
+    "amarelo":"#f7c843","yellow":"#f7c843","peach fuzz":"#ffb79a",
+    "rosa":"#f4a7b9","pink":"#f4a7b9","aqua green":"#4dc4b0",
+    "awesome iceblue":"#89cfe8","verde":"#28a745",
+  };
 
-  /* ── colour map para os dots ── */
-  const COLOR_MAP = {
-    "preto":"#1a1a1a","black":"#1a1a1a","meia-noite":"#1c1c1e","onyx black":"#1a1a1a",
-    "branco":"#f5f5f5","white":"#f5f5f5","azul":"#3a8ecc","blue":"#3a8ecc",
-    "verde":"#28a745","amarelo":"#f7c843","rosa":"#f4a7b9"
-  };
+  function colorDot(cor) {
+    const bg = COLOR_MAP[(cor || "").toLowerCase()] || "#555";
+    return `<span class="color-dot" style="background:${bg}"></span>`;
+  }
 
-  function colorDot(cor) {
-    const key = cor ? cor.toLowerCase() : "";
-    const bg = COLOR_MAP[key] || "#555";
-    return `<span class="color-dot" style="background:${bg}"></span>`;
-  }
+  function fmtPrice(v) {
+    const n = parseFloat(String(v).replace(/[R$\s.]/g, "").replace(",", "."));
+    if (isNaN(n)) return v;
+    return "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  }
 
-  function fmtPrice(v) {
-    return "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-  }
+  function parsePrice(v) {
+    return parseFloat(String(v).replace(/[R$\s.]/g, "").replace(",", ".")) || 0;
+  }
 
-  function filtered() {
-    const q = document.getElementById("searchInput").value.toLowerCase();
-    const br = document.getElementById("brandFilter").value;
-    const st = document.getElementById("storageFilter").value;
-    return STOCK.filter(r =>
-      (!br || r.marca === br) &&
-      (!st || r.armazenamento === st) &&
-      (!q || Object.values(r).some(v => String(v).toLowerCase().includes(q)))
-    );
-  }
+  /* ── CSV parser (handles quoted fields) ── */
+  function parseCSV(text) {
+    const lines = text.trim().split("\n");
+    return lines.slice(1).map(line => {
+      const cols = [];
+      let cur = "", inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === "," && !inQ) { cols.push(cur.trim()); cur = ""; }
+        else cur += c;
+      }
+      cols.push(cur.trim());
+      return cols;
+    });
+  }
 
-  function sortTable(col) {
-    if (sortCol === col) sortDir *= -1;
-    else { sortCol = col; sortDir = 1; }
-    render();
-    document.querySelectorAll("thead th").forEach(th => {
-      th.classList.toggle("sorted", th.dataset.col === col);
-      const ic = th.querySelector(".sort-icon");
-      if (ic) ic.textContent = th.dataset.col === col ? (sortDir === 1 ? "↑" : "↓") : "⇅";
-    });
-  }
+  /* ── state ── */
+  let sortCol = "preco", sortDir = -1;
+  let STOCK = [];
 
-  function render() {
-    const rows = filtered().sort((a, b) => {
-      let va = a[sortCol], vb = b[sortCol];
-      if (typeof va === "number") return (va - vb) * sortDir;
-      return String(va).localeCompare(String(vb), "pt-BR") * sortDir;
-    });
+  function showLoading() {
+    document.getElementById("tableBody").innerHTML = `
+      <tr class="empty-row"><td colspan="6">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="animation:spin 1s linear infinite;margin:0 auto 12px;display:block">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        Carregando dados da planilha…
+      </td></tr>`;
+  }
 
-    const tbody = document.getElementById("tableBody");
-    if (rows.length === 0) {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Nenhum aparelho encontrado</td></tr>`;
-    } else {
-      tbody.innerHTML = rows.map((r, i) => {
-        const msg = encodeURIComponent(`Olá BRCELL! Tenho interesse no ${r.aparelho} ${r.armazenamento} ${r.cor}. Ainda disponível?`);
-        return `
-        <tr style="animation-delay:${Math.min(i * 18, 300)}ms">
-          <td><span class="cell-brand">${r.marca}</span></td>
-          <td><span class="cell-device">${r.aparelho}</span></td>
-          <td><span class="cell-storage">${r.armazenamento}</span></td>
-          <td><span class="cell-color">${colorDot(r.cor)} ${r.cor}</span></td>
-          <td><span class="cell-price">${fmtPrice(r.preco)}</span></td>
-          <td style="text-align:center">
-            <a class="wa-btn" href="https://wa.me/${WHATSAPP_NUMBER}?text=${msg}" target="_blank">Tenho Interesse</a>
-          </td>
-        </tr>`;
-      }).join("");
-    }
-    document.getElementById("countBadge").textContent = `${rows.length} itens`;
-  }
+  function showError(msg) {
+    document.getElementById("tableBody").innerHTML = `
+      <tr class="empty-row"><td colspan="6">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" style="margin:0 auto 12px;display:block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        ${msg}
+      </td></tr>`;
+  }
 
-  function populateFilters() {
-    const brands = [...new Set(STOCK.map(r => r.marca))].sort();
-    const storages = [...new Set(STOCK.map(r => r.armazenamento))].sort();
-    const bf = document.getElementById("brandFilter");
-    const sf = document.getElementById("storageFilter");
-    bf.innerHTML = '<option value="">Todas as marcas</option>';
-    sf.innerHTML = '<option value="">Todo armazenamento</option>';
-    brands.forEach(b => { if(b) bf.innerHTML += `<option value="${b}">${b}</option>`; });
-    storages.forEach(s => { if(s) sf.innerHTML += `<option value="${s}">${s}</option>`; });
-  }
+  /* ── fetch Google Sheets ── */
+  async function loadSheet() {
+    showLoading();
+    try {
+      const res = await fetch(CSV_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const rows = parseCSV(text);
 
-  document.getElementById("searchInput").addEventListener("input", render);
-  document.getElementById("brandFilter").addEventListener("change", render);
-  document.getElementById("storageFilter").addEventListener("change", render);
-  document.getElementById("footerDate").textContent = new Date().toLocaleDateString("pt-BR");
+      STOCK = rows
+        .filter(r => r[COL.aparelho] && r[COL.aparelho].length > 0)
+        .map(r => ({
+          marca:         r[COL.marca]         || "",
+          aparelho:      r[COL.aparelho]       || "",
+          armazenamento: r[COL.armazenamento]  || "",
+          cor:           r[COL.cor]            || "",
+          preco:         parsePrice(r[COL.preco]),
+          precoRaw:      r[COL.preco]          || "",
+        }));
 
-  // Inicia a carga dos dados
-  loadSheetData();
+      populateFilters();
+      render();
+
+      document.getElementById("footerDate").textContent =
+        new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) +
+        " às " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+    } catch (err) {
+      console.error(err);
+      showError(`Erro ao carregar planilha.<br><small style="color:var(--muted)">${err.message}</small><br><br>
+        <small>Verifique se a planilha está com acesso público (<b>Qualquer pessoa com o link</b>).</small>`);
+    }
+  }
+
+  function filtered() {
+    const q  = document.getElementById("searchInput").value.toLowerCase();
+    const br = document.getElementById("brandFilter").value;
+    const st = document.getElementById("storageFilter").value;
+    return STOCK.filter(r =>
+      (!br || r.marca === br) &&
+      (!st || r.armazenamento === st) &&
+      (!q  || Object.values(r).some(v => String(v).toLowerCase().includes(q)))
+    );
+  }
+
+  function sortTable(col) {
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = col === "preco" ? -1 : 1; }
+    render();
+    document.querySelectorAll("thead th").forEach(th => {
+      th.classList.toggle("sorted", th.dataset.col === col);
+      const ic = th.querySelector(".sort-icon");
+      if (ic) ic.textContent = th.dataset.col === col ? (sortDir === 1 ? "↑" : "↓") : "⇅";
+    });
+  }
+
+  function render() {
+    const rows = filtered().sort((a, b) => {
+      let va = a[sortCol], vb = b[sortCol];
+      if (typeof va === "number") return (va - vb) * sortDir;
+      return String(va).localeCompare(String(vb), "pt-BR") * sortDir;
+    });
+
+    const tbody = document.getElementById("tableBody");
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="6">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Nenhum aparelho encontrado
+      </td></tr>`;
+    } else {
+      tbody.innerHTML = rows.map((r, i) => {
+        const precoFmt = r.preco > 0 ? fmtPrice(r.preco) : r.precoRaw;
+        const msg   = encodeURIComponent(`Olá! Tenho interesse no ${r.aparelho} ${r.armazenamento} ${r.cor} por ${precoFmt}. Ainda disponível?`);
+        const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
+        return `
+        <tr style="animation-delay:${Math.min(i * 18, 300)}ms">
+          <td><span class="cell-brand">${r.marca}</span></td>
+          <td><span class="cell-device">${r.aparelho}</span></td>
+          <td><span class="cell-storage">${r.armazenamento}</span></td>
+          <td><span class="cell-color">${colorDot(r.cor)} ${r.cor}</span></td>
+          <td><span class="cell-price">${precoFmt}</span></td>
+          <td style="text-align:center">
+            <a class="wa-btn" href="${waUrl}" target="_blank" rel="noopener">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Tenho Interesse
+            </a>
+          </td>
+        </tr>`;
+      }).join("");
+    }
+
+    document.getElementById("countBadge").textContent =
+      `${rows.length} ${rows.length === 1 ? "item" : "itens"}`;
+  }
+
+  function populateFilters() {
+    const bf = document.getElementById("brandFilter");
+    const sf = document.getElementById("storageFilter");
+    // reset
+    bf.innerHTML = `<option value="">Todas as marcas</option>`;
+    sf.innerHTML = `<option value="">Todo armazenamento</option>`;
+
+    const brands   = [...new Set(STOCK.map(r => r.marca).filter(Boolean))].sort();
+    const storages = [...new Set(STOCK.map(r => r.armazenamento).filter(Boolean))]
+                      .sort((a, b) => parseInt(a) - parseInt(b));
+
+    brands.forEach(b   => { const o = document.createElement("option"); o.value = b; o.textContent = b; bf.appendChild(o); });
+    storages.forEach(s => { const o = document.createElement("option"); o.value = s; o.textContent = s; sf.appendChild(o); });
+  }
+
+  /* ── events ── */
+  document.getElementById("searchInput").addEventListener("input", render);
+  document.getElementById("brandFilter").addEventListener("change", render);
+  document.getElementById("storageFilter").addEventListener("change", render);
+
+  /* ── spin animation ── */
+  const style = document.createElement("style");
+  style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+  document.head.appendChild(style);
+
+  /* ── init ── */
+  loadSheet();
 </script>
+</body>
+</html>
+
+esse código está funcionando fui eu quem fiz
