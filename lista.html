@@ -6,7 +6,21 @@
   <title>BRCELL — Estoque Premium Lab Services</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
-    :root {
+    
+/* Animação da ampulheta */
+.hourglass {
+  display: inline-block;
+  animation: flip 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+@keyframes flip {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  100% { transform: rotate(180deg); }
+}
+:root {
       --black:    #0f0f0f;
       --graphite: #1a1a1a;
       --card:     #212121;
@@ -361,13 +375,16 @@
 
 <!-- HEADER -->
 <header>
+  <header>
   <div class="logo-block">
-    <div class="logo-name">BRCELL</div>
-    <div class="logo-tag">Premium</div>
+    <div class="logo-name">
+      BRCELL - APARELHOS DISPONÍVEIS EM TEMPO REAL 
+      <span class="hourglass">⏳</span>
+    </div>
   </div>
+  <div class="header-sub"></div>
+</header>
   <div class="header-sub">
-    Estoque de Aparelhos
-    <span>Premium Lab Services</span>
   </div>
 </header>
 
@@ -420,7 +437,7 @@
   ══════════════════════════════════════════════════════════ */
   const SHEET_ID  = "1sRrPvd9Vk77rrCA78yUG1L3G-xO-1vy_pgdrbrfLGKE";
   const SHEET_TAB = "BANCODEAPARELHOS";
-  const WA_NUMBER = "55XXXXXXXXXXX"; // ← troque pelo número da loja (ex: 5511999998888)
+  const WA_NUMBER = "5541997589418"; // ← troque pelo número da loja (ex: 5511999998888)
 
   // Índices das colunas na planilha (0 = coluna A)
   // E=Marca(4) F=Modelo(5) G=Cor(6) H=Armazenamento(7) L=Preço(11) P=Status(15)
