@@ -1,4 +1,3 @@
-cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -129,7 +128,7 @@ cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
       background: var(--graphite); border: 1px solid var(--border);
       border-radius: 8px; color: var(--text);
       padding: 9px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
-      cursor: pointer; min-width: 140px;
+      cursor: pointer; min-width: 130px;
     }
     .filter-select:focus { border-color: var(--green); }
     .count-badge {
@@ -249,6 +248,10 @@ cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
     footer strong { color: var(--green); }
 
     /* ── RESPONSIVE ── */
+    @media (max-width: 850px) {
+      .toolbar { gap: 8px; }
+      .filter-select { flex: 1; min-width: 110px; }
+    }
     @media (max-width: 600px) {
       header { padding: 12px 14px; }
       .metrics { padding: 12px 14px 0; }
@@ -259,7 +262,6 @@ cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="logo">BRCELL <span>—</span> Gestão de Estoque</div>
   <div class="save-indicator" id="saveIndicator">
@@ -268,16 +270,14 @@ cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
   </div>
 </header>
 
-<!-- METRICS -->
 <div class="metrics">
   <div class="metric"><div class="metric-label">Disponíveis</div><div class="metric-value mv-green" id="mDisp">—</div></div>
   <div class="metric"><div class="metric-label">Vendidos</div>   <div class="metric-value mv-red"   id="mVend">—</div></div>
   <div class="metric"><div class="metric-label">Reservados</div> <div class="metric-value mv-amber"  id="mRes">—</div></div>
   <div class="metric"><div class="metric-label">Com Defeito</div><div class="metric-value mv-blue"   id="mDef">—</div></div>
-  <div class="metric"><div class="metric-label">Total</div>      <div class="metric-value"           id="mTotal">—</div></div>
+  <div class="metric"><div class="metric-label">Total Listado</div><div class="metric-value"         id="mTotal">—</div></div>
 </div>
 
-<!-- SCRIPT CONFIG BOX -->
 <div class="script-box" id="scriptBox">
   <i class="ti ti-plug-connected"></i>
   <div class="script-box-text">
@@ -293,15 +293,14 @@ cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
   </div>
 </div>
 
-<!-- TOOLBAR -->
 <div class="toolbar">
   <div class="search-wrap">
     <i class="ti ti-search"></i>
-    <input class="search-input" id="searchInput" type="text" placeholder="Buscar modelo, marca, cor, localização…" />
+    <input class="search-input" id="searchInput" type="text" placeholder="Buscar modelo, marca, cor…" />
   </div>
   <select class="filter-select" id="statusFilter">
     <option value="">Todos os status</option>
-    <option value="disponivel">Disponivel</option>
+    <option value="disponivel">Disponível</option>
     <option value="vendido">Vendido</option>
     <option value="reservado">Reservado</option>
     <option value="defeito">Defeito</option>
@@ -309,29 +308,34 @@ cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
   <select class="filter-select" id="marcaFilter">
     <option value="">Todas as marcas</option>
   </select>
+  <select class="filter-select" id="entradaFilter">
+    <option value="">Mês de Entrada</option>
+  </select>
+  <select class="filter-select" id="saidaFilter">
+    <option value="">Mês de Saída</option>
+  </select>
   <div class="count-badge" id="countBadge">— itens</div>
 </div>
 
-<!-- TABLE -->
 <div class="table-wrap">
   <div class="table-container">
     <table id="mainTable">
       <thead>
         <tr>
-          <th onclick="sortBy('id')">        <div class="th-inner">ID           <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('entrada')">   <div class="th-inner">Entrada      <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('tipo')">      <div class="th-inner">Tipo         <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('marca')">     <div class="th-inner">Marca        <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('modelo')">    <div class="th-inner">Modelo       <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('arm')">       <div class="th-inner">Arm.         <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('cor')">       <div class="th-inner">Cor          <span class="sort-icon">⇅</span></div></th>
-          <th>                               <div class="th-inner">Bat.                                          </div></th>
-          <th onclick="sortBy('preco')">     <div class="th-inner">Preço ✎      <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('status')">    <div class="th-inner">Status ✎     <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('saida')">     <div class="th-inner">Saída        <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('estado')">    <div class="th-inner">Estado       <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('origem')">    <div class="th-inner">Origem       <span class="sort-icon">⇅</span></div></th>
-          <th onclick="sortBy('local')">     <div class="th-inner">Localização  <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('id')">        <div class="th-inner">ID            <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('entrada')">   <div class="th-inner">Entrada       <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('tipo')">      <div class="th-inner">Tipo          <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('marca')">     <div class="th-inner">Marca         <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('modelo')">    <div class="th-inner">Modelo        <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('arm')">       <div class="th-inner">Arm.          <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('cor')">       <div class="th-inner">Cor           <span class="sort-icon">⇅</span></div></th>
+          <th>                               <div class="th-inner">Bat.                                            </div></th>
+          <th onclick="sortBy('preco')">     <div class="th-inner">Preço ✎       <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('status')">    <div class="th-inner">Status ✎      <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('saida')">     <div class="th-inner">Saída         <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('estado')">    <div class="th-inner">Estado        <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('origem')">    <div class="th-inner">Origem        <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('local')">     <div class="th-inner">Localização   <span class="sort-icon">⇅</span></div></th>
         </tr>
       </thead>
       <tbody id="tableBody">
@@ -344,12 +348,10 @@ cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
   </div>
 </div>
 
-<!-- FOOTER -->
 <footer>
   Atualizado em <strong id="footerDate"></strong> &nbsp;·&nbsp; <strong>BRCELL</strong> Premium Lab Services
 </footer>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -438,6 +440,15 @@ function statusClass(s) {
   return m[(s || '').toLowerCase()] || 's-outro';
 }
 
+function extractMonthYear(dateStr) {
+  if (!dateStr || dateStr === '—') return null;
+  const parts = String(dateStr).match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (parts) return `${parts[2]}/${parts[3]}`; // Retorna formato MM/YYYY
+  const d = new Date(dateStr);
+  if (!isNaN(d)) return String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+  return null;
+}
+
 /* ══════════════════════════════════════════
    LOAD SHEET
 ══════════════════════════════════════════ */
@@ -473,7 +484,6 @@ async function loadSheet() {
 
     populateFilters();
     renderTable();
-    updateMetrics();
 
     document.getElementById('footerDate').textContent =
       new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }) +
@@ -498,18 +508,45 @@ function populateFilters() {
   [...new Set(DATA.map(r => r.marca).filter(Boolean))].sort().forEach(m => {
     const o = document.createElement('option'); o.value = m; o.textContent = m; mf.appendChild(o);
   });
+
+  const sortMMYYYY = (a, b) => {
+    const [mA, yA] = a.split('/'); const [mB, yB] = b.split('/');
+    return new Date(yB, mB - 1) - new Date(yA, mA - 1);
+  };
+
+  const ef = document.getElementById('entradaFilter');
+  ef.innerHTML = '<option value="">Mês de Entrada</option>';
+  [...new Set(DATA.map(r => extractMonthYear(r.entrada)).filter(Boolean))]
+    .sort(sortMMYYYY).forEach(m => {
+      const o = document.createElement('option'); o.value = m; o.textContent = m; ef.appendChild(o);
+    });
+
+  const saf = document.getElementById('saidaFilter');
+  saf.innerHTML = '<option value="">Mês de Saída</option>';
+  [...new Set(DATA.map(r => extractMonthYear(r.saida)).filter(Boolean))]
+    .sort(sortMMYYYY).forEach(m => {
+      const o = document.createElement('option'); o.value = m; o.textContent = m; saf.appendChild(o);
+    });
 }
 
 function filtered() {
-  const q  = (document.getElementById('searchInput').value || '').toLowerCase();
-  const sf = (document.getElementById('statusFilter').value || '').toLowerCase();
-  const mf = document.getElementById('marcaFilter').value || '';
-  return DATA.filter(r =>
-    (!mf || r.marca === mf) &&
-    (!sf || (r.status || '').toLowerCase() === sf) &&
-    (!q  || [r.id, r.modelo, r.marca, r.cor, r.arm, r.local, r.estado, r.origem, r.tipo]
-              .some(v => String(v).toLowerCase().includes(q)))
-  );
+  const q   = (document.getElementById('searchInput').value || '').toLowerCase();
+  const sf  = (document.getElementById('statusFilter').value || '').toLowerCase();
+  const mf  = document.getElementById('marcaFilter').value || '';
+  const ef  = document.getElementById('entradaFilter').value || '';
+  const saf = document.getElementById('saidaFilter').value || '';
+
+  return DATA.filter(r => {
+    const rEntrada = extractMonthYear(r.entrada) || '';
+    const rSaida = extractMonthYear(r.saida) || '';
+
+    return (!mf  || r.marca === mf) &&
+           (!sf  || (r.status || '').toLowerCase() === sf) &&
+           (!ef  || rEntrada === ef) &&
+           (!saf || rSaida === saf) &&
+           (!q   || [r.id, r.modelo, r.marca, r.cor, r.arm, r.local, r.estado, r.origem, r.tipo]
+                      .some(v => String(v).toLowerCase().includes(q)));
+  });
 }
 
 function sortBy(col) {
@@ -527,6 +564,18 @@ function sortBy(col) {
 }
 
 /* ══════════════════════════════════════════
+   METRICS
+══════════════════════════════════════════ */
+function updateMetrics(rows) {
+  const currentData = rows || filtered();
+  document.getElementById('mTotal').textContent = currentData.length;
+  document.getElementById('mDisp').textContent  = currentData.filter(r => (r.status||'').toLowerCase() === 'disponivel').length;
+  document.getElementById('mVend').textContent  = currentData.filter(r => (r.status||'').toLowerCase() === 'vendido').length;
+  document.getElementById('mRes').textContent   = currentData.filter(r => (r.status||'').toLowerCase() === 'reservado').length;
+  document.getElementById('mDef').textContent   = currentData.filter(r => (r.status||'').toLowerCase() === 'defeito').length;
+}
+
+/* ══════════════════════════════════════════
    RENDER TABLE
 ══════════════════════════════════════════ */
 function renderTable() {
@@ -537,6 +586,9 @@ function renderTable() {
   });
 
   document.getElementById('countBadge').textContent = `${rows.length} ${rows.length === 1 ? 'item' : 'itens'}`;
+  
+  // Atualiza os painéis numéricos baseados nos dados atualmente filtrados
+  updateMetrics(rows);
 
   if (!rows.length) {
     document.getElementById('tableBody').innerHTML =
@@ -558,7 +610,6 @@ function renderTable() {
       <td class="cell-muted">${r.cor}</td>
       <td class="cell-bat">${r.bateria}</td>
 
-      <!-- PREÇO EDITÁVEL -->
       <td class="editable-cell" id="price-cell-${r.id}">
         <div class="cell-display">
           <span class="cell-price" id="price-val-${r.id}">${r.preco ? fmtPrice(r.preco) : '—'}</span>
@@ -568,7 +619,6 @@ function renderTable() {
         </div>
       </td>
 
-      <!-- STATUS EDITÁVEL -->
       <td class="editable-cell" id="status-cell-${r.id}">
         <div class="cell-display">
           <span class="s-badge ${statusClass(r.status)}" id="status-val-${r.id}">${r.status || '—'}</span>
@@ -626,7 +676,7 @@ function confirmPrice(id) {
       </button>
     </div>`;
 
-  updateMetrics();
+  renderTable(); // Re-renderiza para atualizar painéis e tela
   saveToScript(id, 'preco', newPreco);
 }
 
@@ -691,7 +741,7 @@ function confirmStatus(id) {
       </button>
     </div>`;
 
-  updateMetrics();
+  renderTable(); // Re-renderiza para atualizar painéis e tela
   saveToScript(id, 'status', newStatus);
 }
 
@@ -763,17 +813,6 @@ async function saveToScript(id, field, value) {
 }
 
 /* ══════════════════════════════════════════
-   METRICS
-══════════════════════════════════════════ */
-function updateMetrics() {
-  document.getElementById('mTotal').textContent = DATA.length;
-  document.getElementById('mDisp').textContent  = DATA.filter(r => (r.status||'').toLowerCase() === 'disponivel').length;
-  document.getElementById('mVend').textContent  = DATA.filter(r => (r.status||'').toLowerCase() === 'vendido').length;
-  document.getElementById('mRes').textContent   = DATA.filter(r => (r.status||'').toLowerCase() === 'reservado').length;
-  document.getElementById('mDef').textContent   = DATA.filter(r => (r.status||'').toLowerCase() === 'defeito').length;
-}
-
-/* ══════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════ */
 function showToast(msg, type = '') {
@@ -792,45 +831,12 @@ function showToast(msg, type = '') {
 document.getElementById('searchInput').addEventListener('input', renderTable);
 document.getElementById('statusFilter').addEventListener('change', renderTable);
 document.getElementById('marcaFilter').addEventListener('change', renderTable);
+document.getElementById('entradaFilter').addEventListener('change', renderTable);
+document.getElementById('saidaFilter').addEventListener('change', renderTable);
 
 /* ── INIT ── */
 loadSheet();
 </script>
-
-<!--
-════════════════════════════════════════════════════════
-  GOOGLE APPS SCRIPT — cole isso em script.google.com
-  para que as edições sejam salvas na planilha
-════════════════════════════════════════════════════════
-
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    const ss   = SpreadsheetApp.openById(data.sheetId);
-    const sheet = ss.getSheetByName(data.tab);
-    const vals = sheet.getDataRange().getValues();
-
-    // Encontra a linha pelo ID (coluna A = índice 0)
-    const rowIdx = vals.findIndex(r => String(r[0]) === String(data.id));
-    if (rowIdx === -1) return ContentService.createTextOutput(JSON.stringify({ ok: false, msg: 'ID não encontrado' }));
-
-    const colMap = {
-      'preco':  12,  // coluna L (1-based)
-      'status': 16,  // coluna P
-      'saida':  17   // coluna Q
-    };
-    const col = colMap[data.field];
-    if (!col) return ContentService.createTextOutput(JSON.stringify({ ok: false, msg: 'Campo inválido' }));
-
-    sheet.getRange(rowIdx + 1, col).setValue(data.value);
-    return ContentService.createTextOutput(JSON.stringify({ ok: true }));
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({ ok: false, msg: err.message }));
-  }
-}
-
-════════════════════════════════════════════════════════
--->
 
 </body>
 </html>
