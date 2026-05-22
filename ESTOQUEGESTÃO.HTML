@@ -1,0 +1,836 @@
+cat > /mnt/user-data/outputs/brcell_gestao.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRCELL — Gestão de Estoque</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    :root {
+      --black:      #222323;
+      --graphite:   #1a1a1a;
+      --card:       #212121;
+      --row-alt:    #1e1e1e;
+      --green:      #28a745;
+      --green-dim:  #1d7a34;
+      --green-glow: rgba(40,167,69,0.18);
+      --text:       #e8e8e8;
+      --muted:      #8a8a8a;
+      --border:     rgba(40,167,69,0.15);
+      --divider:    rgba(255,255,255,0.05);
+      --amber:      #f0a500;
+      --red:        #e74c3c;
+      --blue:       #3a8ecc;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--black);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      min-height: 100vh;
+      background-image:
+        linear-gradient(var(--divider) 1px, transparent 1px),
+        linear-gradient(90deg, var(--divider) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--graphite);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px 12px;
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(18px, 3vw, 30px);
+      letter-spacing: 3px;
+      color: #fff;
+      text-shadow: 0 0 30px var(--green-glow);
+    }
+    .logo span { color: var(--green); }
+    .save-indicator {
+      font-size: 11px; color: var(--muted);
+      display: none; align-items: center; gap: 6px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-saving { background: var(--amber); animation: pulse 1s infinite; }
+    .dot-saved  { background: var(--green); }
+    .dot-error  { background: var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── METRICS ── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+      gap: 10px; padding: 16px 20px 0;
+    }
+    .metric {
+      background: var(--graphite);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .metric-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .metric-value { font-size: 28px; font-weight: 600; line-height: 1; }
+    .mv-green { color: var(--green); }
+    .mv-red   { color: var(--red); }
+    .mv-amber { color: var(--amber); }
+    .mv-blue  { color: var(--blue); }
+
+    /* ── SCRIPT CONFIG ── */
+    .script-box {
+      margin: 14px 20px 0;
+      background: rgba(40,167,69,0.06);
+      border: 1px dashed rgba(40,167,69,0.4);
+      border-radius: 10px; padding: 12px 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .script-box i { color: var(--green); font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .script-box-text { flex: 1; }
+    .script-box-text p { font-size: 12px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+    .script-box-text p strong { color: var(--text); }
+    .script-box-text a { color: var(--green); text-decoration: none; font-size: 12px; }
+    .script-input-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .script-input-row input {
+      flex: 1; min-width: 200px;
+      background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      padding: 8px 12px; font-family: 'DM Sans', sans-serif; font-size: 12px; outline: none;
+    }
+    .script-input-row input:focus { border-color: var(--green); }
+    .script-input-row input::placeholder { color: var(--muted); }
+    .script-input-row button {
+      background: var(--green-dim); border: 1px solid var(--green);
+      color: #fff; border-radius: 8px; padding: 8px 14px;
+      font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+      cursor: pointer; white-space: nowrap; transition: background 0.2s;
+    }
+    .script-input-row button:hover { background: var(--green); }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      padding: 14px 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
+    .search-input {
+      width: 100%; background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      padding: 9px 10px 9px 32px; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+    }
+    .search-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-glow); }
+    .search-input::placeholder { color: var(--muted); }
+    .filter-select {
+      background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      padding: 9px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+      cursor: pointer; min-width: 140px;
+    }
+    .filter-select:focus { border-color: var(--green); }
+    .count-badge {
+      background: var(--green-glow); border: 1px solid var(--border);
+      color: var(--green); font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      padding: 6px 12px; border-radius: 20px; white-space: nowrap;
+    }
+
+    /* ── TABLE ── */
+    .table-wrap { padding: 0 20px 40px; overflow-x: auto; }
+    .table-container {
+      background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    thead tr { background: linear-gradient(135deg, var(--green-dim) 0%, var(--green) 100%); }
+    thead th {
+      padding: 10px 12px; text-align: left;
+      font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #fff; white-space: nowrap; cursor: pointer; user-select: none;
+    }
+    thead th:hover { background: rgba(255,255,255,0.1); }
+    thead th.sorted { background: rgba(0,0,0,0.15); }
+    thead th .th-inner { display: flex; align-items: center; gap: 4px; }
+    thead th .sort-icon { opacity: 0.6; font-size: 11px; }
+    thead th.sorted .sort-icon { opacity: 1; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--divider);
+      transition: background 0.12s;
+      animation: fadeRow 0.25s ease both;
+    }
+    @keyframes fadeRow { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:translateY(0)} }
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+    tbody tr:nth-child(odd)  { background: var(--graphite); }
+    tbody tr:hover { background: rgba(40,167,69,0.06) !important; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 9px 12px; vertical-align: middle; }
+
+    /* ── BADGES DE STATUS ── */
+    .s-badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .s-disponivel { background: rgba(40,167,69,0.15); color: #28a745; border: 1px solid rgba(40,167,69,0.3); }
+    .s-vendido    { background: rgba(231,76,60,0.15);  color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+    .s-reservado  { background: rgba(240,165,0,0.15);  color: #f0a500; border: 1px solid rgba(240,165,0,0.3); }
+    .s-defeito    { background: rgba(58,142,204,0.15); color: #3a8ecc; border: 1px solid rgba(58,142,204,0.3); }
+    .s-outro      { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── EDITABLE CELLS ── */
+    .editable-cell .cell-display { display: flex; align-items: center; gap: 5px; }
+    .edit-btn {
+      background: none; border: none; cursor: pointer; color: var(--muted);
+      padding: 2px 5px; border-radius: 5px; font-size: 13px;
+      opacity: 0; transition: opacity 0.12s;
+    }
+    tbody tr:hover .edit-btn { opacity: 1; }
+    .edit-btn:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+
+    .inline-edit { display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; }
+    .inline-edit input, .inline-edit select {
+      background: var(--black); border: 1px solid var(--green);
+      border-radius: 6px; color: var(--text); outline: none;
+      padding: 4px 8px; font-family: 'DM Sans', sans-serif; font-size: 12px;
+    }
+    .inline-edit input { width: 100px; }
+    .inline-edit select { min-width: 110px; }
+    .ie-confirm, .ie-cancel {
+      border: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; padding: 4px 8px; transition: background 0.15s;
+    }
+    .ie-confirm { background: var(--green-dim); color: #fff; }
+    .ie-confirm:hover { background: var(--green); }
+    .ie-cancel { background: rgba(255,255,255,0.08); color: var(--muted); }
+    .ie-cancel:hover { background: rgba(255,255,255,0.15); color: var(--text); }
+
+    /* ── CÉLULAS ── */
+    .cell-id     { font-size: 11px; color: var(--muted); min-width: 55px; }
+    .cell-date   { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .cell-marca  { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .cell-modelo { font-weight: 500; color: var(--text); max-width: 180px; }
+    .cell-bat    { color: var(--green); font-weight: 600; font-size: 12px; }
+    .cell-price  { font-weight: 700; font-size: 14px; color: var(--green); white-space: nowrap; }
+    .cell-muted  { color: var(--muted); font-size: 12px; }
+
+    /* ── EMPTY / LOADER ── */
+    .empty-row td { text-align: center; padding: 50px 20px; color: var(--muted); }
+    .loader-row td { text-align: center; padding: 50px 20px; }
+    .spinner {
+      display: inline-block; width: 22px; height: 22px;
+      border: 2px solid var(--border); border-top-color: var(--green);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 18px;
+      font-size: 13px; color: var(--text);
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-color: var(--green); color: var(--green); }
+    .toast.error   { border-color: var(--red);   color: var(--red); }
+    .toast.warning { border-color: var(--amber);  color: var(--amber); }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; padding: 14px 20px;
+      font-size: 11px; color: var(--muted); letter-spacing: 1px;
+      border-top: 1px solid var(--divider);
+    }
+    footer strong { color: var(--green); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      header { padding: 12px 14px; }
+      .metrics { padding: 12px 14px 0; }
+      .toolbar, .table-wrap { padding-left: 14px; padding-right: 14px; }
+      .script-box { margin-left: 14px; margin-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">BRCELL <span>—</span> Gestão de Estoque</div>
+  <div class="save-indicator" id="saveIndicator">
+    <span class="dot dot-saving" id="saveDot"></span>
+    <span id="saveText">Salvando…</span>
+  </div>
+</header>
+
+<!-- METRICS -->
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Disponíveis</div><div class="metric-value mv-green" id="mDisp">—</div></div>
+  <div class="metric"><div class="metric-label">Vendidos</div>   <div class="metric-value mv-red"   id="mVend">—</div></div>
+  <div class="metric"><div class="metric-label">Reservados</div> <div class="metric-value mv-amber"  id="mRes">—</div></div>
+  <div class="metric"><div class="metric-label">Com Defeito</div><div class="metric-value mv-blue"   id="mDef">—</div></div>
+  <div class="metric"><div class="metric-label">Total</div>      <div class="metric-value"           id="mTotal">—</div></div>
+</div>
+
+<!-- SCRIPT CONFIG BOX -->
+<div class="script-box" id="scriptBox">
+  <i class="ti ti-plug-connected"></i>
+  <div class="script-box-text">
+    <p>
+      <strong>Para salvar edições direto na planilha</strong>, cole a URL do seu Google Apps Script.<br>
+      Sem ela, as edições ficam só nesta sessão do navegador.
+      <a href="https://script.google.com" target="_blank" rel="noopener">Criar Apps Script ↗</a>
+    </p>
+    <div class="script-input-row">
+      <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" />
+      <button onclick="saveScriptUrl()"><i class="ti ti-check"></i> Salvar URL</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <i class="ti ti-search"></i>
+    <input class="search-input" id="searchInput" type="text" placeholder="Buscar modelo, marca, cor, localização…" />
+  </div>
+  <select class="filter-select" id="statusFilter">
+    <option value="">Todos os status</option>
+    <option value="disponivel">Disponivel</option>
+    <option value="vendido">Vendido</option>
+    <option value="reservado">Reservado</option>
+    <option value="defeito">Defeito</option>
+  </select>
+  <select class="filter-select" id="marcaFilter">
+    <option value="">Todas as marcas</option>
+  </select>
+  <div class="count-badge" id="countBadge">— itens</div>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <div class="table-container">
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th onclick="sortBy('id')">        <div class="th-inner">ID           <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('entrada')">   <div class="th-inner">Entrada      <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('tipo')">      <div class="th-inner">Tipo         <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('marca')">     <div class="th-inner">Marca        <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('modelo')">    <div class="th-inner">Modelo       <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('arm')">       <div class="th-inner">Arm.         <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('cor')">       <div class="th-inner">Cor          <span class="sort-icon">⇅</span></div></th>
+          <th>                               <div class="th-inner">Bat.                                          </div></th>
+          <th onclick="sortBy('preco')">     <div class="th-inner">Preço ✎      <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('status')">    <div class="th-inner">Status ✎     <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('saida')">     <div class="th-inner">Saída        <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('estado')">    <div class="th-inner">Estado       <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('origem')">    <div class="th-inner">Origem       <span class="sort-icon">⇅</span></div></th>
+          <th onclick="sortBy('local')">     <div class="th-inner">Localização  <span class="sort-icon">⇅</span></div></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr class="loader-row"><td colspan="14">
+          <div class="spinner"></div>
+          <div style="margin-top:10px;color:var(--muted)">Carregando dados da planilha…</div>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  Atualizado em <strong id="footerDate"></strong> &nbsp;·&nbsp; <strong>BRCELL</strong> Premium Lab Services
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   CONFIGURAÇÃO — edite aqui se precisar
+══════════════════════════════════════════ */
+const SHEET_ID  = "1sRrPvd9Vk77rrCA78yUG1L3G-xO-1vy_pgdrbrfLGKE";
+const SHEET_TAB = "BANCODEAPARELHOS";
+const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+
+/* Índices das colunas (0 = coluna A) */
+const COL = {
+  id:0, entrada:1, tipo:2, mei:3, marca:4, modelo:5, cor:6,
+  arm:7, bateria:8, custo:9, custoadd:10, preco:11, parcelado:12,
+  margem:13, foramarg:14, status:15, saida:16, estado:17, origem:18, local:19
+};
+
+/* ══════════════════════════════════════════
+   ESTADO GLOBAL
+══════════════════════════════════════════ */
+let DATA     = [];
+let sortCol  = 'id';
+let sortDir  = 1;
+let SCRIPT_URL = '';
+
+/* ══════════════════════════════════════════
+   SCRIPT URL (salvo em localStorage)
+══════════════════════════════════════════ */
+try {
+  SCRIPT_URL = localStorage.getItem('brcell_script_url') || '';
+} catch(e) {}
+
+if (SCRIPT_URL) {
+  document.getElementById('scriptUrlInput').value = SCRIPT_URL;
+  document.getElementById('scriptBox').style.display = 'none';
+}
+
+function saveScriptUrl() {
+  const v = document.getElementById('scriptUrlInput').value.trim();
+  if (!v.startsWith('https://script.google.com')) {
+    showToast('URL inválida. Deve começar com https://script.google.com', 'error');
+    return;
+  }
+  SCRIPT_URL = v;
+  try { localStorage.setItem('brcell_script_url', v); } catch(e) {}
+  document.getElementById('scriptBox').style.display = 'none';
+  showToast('URL salva! Edições serão gravadas na planilha.', 'success');
+}
+
+/* ══════════════════════════════════════════
+   PARSERS
+══════════════════════════════════════════ */
+function parseCSV(text) {
+  return text.trim().split('\n').slice(1).map(line => {
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function fmtPrice(v) {
+  const n = parseFloat(String(v).replace(/[R$\s.]/g, '').replace(',', '.'));
+  return isNaN(n) ? (v || '—') : 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+function parsePrice(v) {
+  return parseFloat(String(v).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+}
+function fmtDate(v) {
+  if (!v || v === '—') return '—';
+  const parts = v.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (parts) return v;
+  const d = new Date(v);
+  return isNaN(d) ? v : d.toLocaleDateString('pt-BR');
+}
+function todayBR() {
+  return new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function statusClass(s) {
+  const m = { disponivel:'s-disponivel', vendido:'s-vendido', reservado:'s-reservado', defeito:'s-defeito' };
+  return m[(s || '').toLowerCase()] || 's-outro';
+}
+
+/* ══════════════════════════════════════════
+   LOAD SHEET
+══════════════════════════════════════════ */
+async function loadSheet() {
+  try {
+    const res = await fetch(CSV_URL + '&nocache=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const raw  = parseCSV(text);
+
+    DATA = raw
+      .filter(r => r[COL.modelo] && r[COL.modelo].trim().length > 0)
+      .map(r => ({
+        raw:       r,
+        id:        r[COL.id]       || '',
+        entrada:   r[COL.entrada]  || '',
+        tipo:      r[COL.tipo]     || '',
+        mei:       r[COL.mei]      || '',
+        marca:     r[COL.marca]    || '',
+        modelo:    r[COL.modelo]   || '',
+        cor:       r[COL.cor]      || '',
+        arm:       r[COL.arm]      || '',
+        bateria:   r[COL.bateria]  || '',
+        preco:     r[COL.preco]    || '',
+        parcelado: r[COL.parcelado]|| '',
+        margem:    r[COL.margem]   || '',
+        status:    r[COL.status]   || '',
+        saida:     r[COL.saida]    || '',
+        estado:    r[COL.estado]   || '',
+        origem:    r[COL.origem]   || '',
+        local:     r[COL.local]    || '',
+      }));
+
+    populateFilters();
+    renderTable();
+    updateMetrics();
+
+    document.getElementById('footerDate').textContent =
+      new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }) +
+      ' às ' + new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+
+  } catch(e) {
+    document.getElementById('tableBody').innerHTML =
+      `<tr class="empty-row"><td colspan="14" style="color:var(--red)">
+        <i class="ti ti-alert-circle" style="font-size:30px;display:block;margin:0 auto 10px"></i>
+        Erro ao carregar: ${e.message}<br>
+        <small style="color:var(--muted)">Verifique se a planilha está com acesso público (qualquer pessoa com o link pode visualizar).</small>
+      </td></tr>`;
+  }
+}
+
+/* ══════════════════════════════════════════
+   FILTERS & SORT
+══════════════════════════════════════════ */
+function populateFilters() {
+  const mf = document.getElementById('marcaFilter');
+  mf.innerHTML = '<option value="">Todas as marcas</option>';
+  [...new Set(DATA.map(r => r.marca).filter(Boolean))].sort().forEach(m => {
+    const o = document.createElement('option'); o.value = m; o.textContent = m; mf.appendChild(o);
+  });
+}
+
+function filtered() {
+  const q  = (document.getElementById('searchInput').value || '').toLowerCase();
+  const sf = (document.getElementById('statusFilter').value || '').toLowerCase();
+  const mf = document.getElementById('marcaFilter').value || '';
+  return DATA.filter(r =>
+    (!mf || r.marca === mf) &&
+    (!sf || (r.status || '').toLowerCase() === sf) &&
+    (!q  || [r.id, r.modelo, r.marca, r.cor, r.arm, r.local, r.estado, r.origem, r.tipo]
+              .some(v => String(v).toLowerCase().includes(q)))
+  );
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  document.querySelectorAll('thead th').forEach(th => {
+    const ic = th.querySelector('.sort-icon');
+    if (!ic) return;
+    const fn = th.getAttribute('onclick') || '';
+    const isThis = fn.includes(`'${col}'`);
+    th.classList.toggle('sorted', isThis);
+    ic.textContent = isThis ? (sortDir === 1 ? '↑' : '↓') : '⇅';
+  });
+  renderTable();
+}
+
+/* ══════════════════════════════════════════
+   RENDER TABLE
+══════════════════════════════════════════ */
+function renderTable() {
+  const rows = filtered().sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (sortCol === 'preco') { va = parsePrice(va); vb = parsePrice(vb); return (va - vb) * sortDir; }
+    return String(va).localeCompare(String(vb), 'pt-BR') * sortDir;
+  });
+
+  document.getElementById('countBadge').textContent = `${rows.length} ${rows.length === 1 ? 'item' : 'itens'}`;
+
+  if (!rows.length) {
+    document.getElementById('tableBody').innerHTML =
+      `<tr class="empty-row"><td colspan="14">
+        <i class="ti ti-search-off" style="font-size:30px;display:block;margin:0 auto 10px;opacity:0.3"></i>
+        Nenhum aparelho encontrado com esses filtros
+      </td></tr>`;
+    return;
+  }
+
+  document.getElementById('tableBody').innerHTML = rows.map((r, i) => `
+    <tr style="animation-delay:${Math.min(i * 15, 300)}ms" data-id="${r.id}">
+      <td class="cell-id">${r.id}</td>
+      <td class="cell-date">${fmtDate(r.entrada)}</td>
+      <td class="cell-muted">${r.tipo}</td>
+      <td class="cell-marca">${r.marca}</td>
+      <td class="cell-modelo">${r.modelo}</td>
+      <td>${r.arm}</td>
+      <td class="cell-muted">${r.cor}</td>
+      <td class="cell-bat">${r.bateria}</td>
+
+      <!-- PREÇO EDITÁVEL -->
+      <td class="editable-cell" id="price-cell-${r.id}">
+        <div class="cell-display">
+          <span class="cell-price" id="price-val-${r.id}">${r.preco ? fmtPrice(r.preco) : '—'}</span>
+          <button class="edit-btn" onclick="editPrice('${r.id}')" title="Editar preço">
+            <i class="ti ti-pencil"></i>
+          </button>
+        </div>
+      </td>
+
+      <!-- STATUS EDITÁVEL -->
+      <td class="editable-cell" id="status-cell-${r.id}">
+        <div class="cell-display">
+          <span class="s-badge ${statusClass(r.status)}" id="status-val-${r.id}">${r.status || '—'}</span>
+          <button class="edit-btn" onclick="editStatus('${r.id}')" title="Editar status">
+            <i class="ti ti-pencil"></i>
+          </button>
+        </div>
+      </td>
+
+      <td class="cell-date" id="saida-val-${r.id}">${r.saida || '—'}</td>
+      <td class="cell-muted">${r.estado}</td>
+      <td class="cell-muted">${r.origem}</td>
+      <td class="cell-muted">${r.local}</td>
+    </tr>`).join('');
+}
+
+/* ══════════════════════════════════════════
+   EDIT PREÇO
+══════════════════════════════════════════ */
+function editPrice(id) {
+  const r = DATA.find(x => x.id === id);
+  if (!r) return;
+  const cur = parsePrice(r.preco);
+
+  document.getElementById('price-cell-' + id).innerHTML = `
+    <div class="inline-edit">
+      <input type="number" id="pe-${id}" value="${cur || ''}" placeholder="0.00" step="0.01" min="0" />
+      <button class="ie-confirm" onclick="confirmPrice('${id}')"><i class="ti ti-check"></i></button>
+      <button class="ie-cancel"  onclick="cancelEdit('${id}','price')"><i class="ti ti-x"></i></button>
+    </div>`;
+
+  const inp = document.getElementById('pe-' + id);
+  inp.focus(); inp.select();
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  confirmPrice(id);
+    if (e.key === 'Escape') cancelEdit(id, 'price');
+  });
+}
+
+function confirmPrice(id) {
+  const r = DATA.find(x => x.id === id);
+  if (!r) return;
+  const v = parseFloat(document.getElementById('pe-' + id).value);
+  if (isNaN(v) || v < 0) { showToast('Valor inválido', 'error'); return; }
+
+  const newPreco = 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  r.preco = newPreco;
+  r.raw[COL.preco] = newPreco;
+
+  document.getElementById('price-cell-' + id).innerHTML = `
+    <div class="cell-display">
+      <span class="cell-price" id="price-val-${id}">${fmtPrice(newPreco)}</span>
+      <button class="edit-btn" onclick="editPrice('${id}')" title="Editar preço">
+        <i class="ti ti-pencil"></i>
+      </button>
+    </div>`;
+
+  updateMetrics();
+  saveToScript(id, 'preco', newPreco);
+}
+
+/* ══════════════════════════════════════════
+   EDIT STATUS
+══════════════════════════════════════════ */
+function editStatus(id) {
+  const r = DATA.find(x => x.id === id);
+  if (!r) return;
+  const cur = (r.status || '').toLowerCase();
+
+  document.getElementById('status-cell-' + id).innerHTML = `
+    <div class="inline-edit">
+      <select id="se-${id}">
+        <option value="Disponivel" ${cur==='disponivel'?'selected':''}>Disponivel</option>
+        <option value="Vendido"    ${cur==='vendido'   ?'selected':''}>Vendido</option>
+        <option value="Reservado"  ${cur==='reservado' ?'selected':''}>Reservado</option>
+        <option value="Defeito"    ${cur==='defeito'   ?'selected':''}>Defeito</option>
+      </select>
+      <button class="ie-confirm" onclick="confirmStatus('${id}')"><i class="ti ti-check"></i></button>
+      <button class="ie-cancel"  onclick="cancelEdit('${id}','status')"><i class="ti ti-x"></i></button>
+    </div>`;
+
+  document.getElementById('se-' + id).addEventListener('keydown', e => {
+    if (e.key === 'Enter')  confirmStatus(id);
+    if (e.key === 'Escape') cancelEdit(id, 'status');
+  });
+}
+
+function confirmStatus(id) {
+  const r = DATA.find(x => x.id === id);
+  if (!r) return;
+  const newStatus  = document.getElementById('se-' + id).value;
+  const oldStatusL = (r.status || '').toLowerCase();
+
+  r.status = newStatus;
+  r.raw[COL.status] = newStatus;
+
+  /* ── AUTO-DATA DE SAÍDA ── */
+  if (newStatus.toLowerCase() === 'vendido' && oldStatusL !== 'vendido') {
+    const today = todayBR();
+    r.saida = today;
+    r.raw[COL.saida] = today;
+    document.getElementById('saida-val-' + id).textContent = today;
+    saveToScript(id, 'saida', today);
+    showToast('Status → Vendido. Data de saída: ' + today, 'success');
+  }
+
+  /* ── SE VOLTOU DE VENDIDO ── */
+  if (newStatus.toLowerCase() !== 'vendido' && oldStatusL === 'vendido') {
+    r.saida = '';
+    r.raw[COL.saida] = '';
+    document.getElementById('saida-val-' + id).textContent = '—';
+    saveToScript(id, 'saida', '');
+  }
+
+  document.getElementById('status-cell-' + id).innerHTML = `
+    <div class="cell-display">
+      <span class="s-badge ${statusClass(newStatus)}" id="status-val-${id}">${newStatus}</span>
+      <button class="edit-btn" onclick="editStatus('${id}')" title="Editar status">
+        <i class="ti ti-pencil"></i>
+      </button>
+    </div>`;
+
+  updateMetrics();
+  saveToScript(id, 'status', newStatus);
+}
+
+/* ══════════════════════════════════════════
+   CANCELAR EDIÇÃO
+══════════════════════════════════════════ */
+function cancelEdit(id, type) {
+  const r = DATA.find(x => x.id === id);
+  if (!r) return;
+  if (type === 'price') {
+    document.getElementById('price-cell-' + id).innerHTML = `
+      <div class="cell-display">
+        <span class="cell-price" id="price-val-${id}">${r.preco ? fmtPrice(r.preco) : '—'}</span>
+        <button class="edit-btn" onclick="editPrice('${id}')" title="Editar preço">
+          <i class="ti ti-pencil"></i>
+        </button>
+      </div>`;
+  } else {
+    document.getElementById('status-cell-' + id).innerHTML = `
+      <div class="cell-display">
+        <span class="s-badge ${statusClass(r.status)}" id="status-val-${id}">${r.status || '—'}</span>
+        <button class="edit-btn" onclick="editStatus('${id}')" title="Editar status">
+          <i class="ti ti-pencil"></i>
+        </button>
+      </div>`;
+  }
+}
+
+/* ══════════════════════════════════════════
+   SALVAR NO APPS SCRIPT
+══════════════════════════════════════════ */
+async function saveToScript(id, field, value) {
+  if (!SCRIPT_URL) {
+    document.getElementById('scriptBox').style.display = 'flex';
+    showToast('Cole a URL do Apps Script para salvar na planilha', 'warning');
+    return;
+  }
+
+  const si  = document.getElementById('saveIndicator');
+  const dot = document.getElementById('saveDot');
+  const txt = document.getElementById('saveText');
+  si.style.display  = 'flex';
+  dot.className     = 'dot dot-saving';
+  txt.textContent   = 'Salvando…';
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        action:  'update',
+        sheetId: SHEET_ID,
+        tab:     SHEET_TAB,
+        id,
+        field,
+        value,
+        colIndex: field === 'status' ? COL.status : field === 'saida' ? COL.saida : field === 'preco' ? COL.preco : null
+      })
+    });
+    dot.className   = 'dot dot-saved';
+    txt.textContent = 'Salvo ✓';
+    setTimeout(() => { si.style.display = 'none'; }, 3000);
+  } catch(e) {
+    dot.className   = 'dot dot-error';
+    txt.textContent = 'Erro ao salvar';
+    showToast('Erro ao salvar: ' + e.message, 'error');
+  }
+}
+
+/* ══════════════════════════════════════════
+   METRICS
+══════════════════════════════════════════ */
+function updateMetrics() {
+  document.getElementById('mTotal').textContent = DATA.length;
+  document.getElementById('mDisp').textContent  = DATA.filter(r => (r.status||'').toLowerCase() === 'disponivel').length;
+  document.getElementById('mVend').textContent  = DATA.filter(r => (r.status||'').toLowerCase() === 'vendido').length;
+  document.getElementById('mRes').textContent   = DATA.filter(r => (r.status||'').toLowerCase() === 'reservado').length;
+  document.getElementById('mDef').textContent   = DATA.filter(r => (r.status||'').toLowerCase() === 'defeito').length;
+}
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  void t.offsetWidth;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ══════════════════════════════════════════
+   EVENT LISTENERS
+══════════════════════════════════════════ */
+document.getElementById('searchInput').addEventListener('input', renderTable);
+document.getElementById('statusFilter').addEventListener('change', renderTable);
+document.getElementById('marcaFilter').addEventListener('change', renderTable);
+
+/* ── INIT ── */
+loadSheet();
+</script>
+
+<!--
+════════════════════════════════════════════════════════
+  GOOGLE APPS SCRIPT — cole isso em script.google.com
+  para que as edições sejam salvas na planilha
+════════════════════════════════════════════════════════
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const ss   = SpreadsheetApp.openById(data.sheetId);
+    const sheet = ss.getSheetByName(data.tab);
+    const vals = sheet.getDataRange().getValues();
+
+    // Encontra a linha pelo ID (coluna A = índice 0)
+    const rowIdx = vals.findIndex(r => String(r[0]) === String(data.id));
+    if (rowIdx === -1) return ContentService.createTextOutput(JSON.stringify({ ok: false, msg: 'ID não encontrado' }));
+
+    const colMap = {
+      'preco':  12,  // coluna L (1-based)
+      'status': 16,  // coluna P
+      'saida':  17   // coluna Q
+    };
+    const col = colMap[data.field];
+    if (!col) return ContentService.createTextOutput(JSON.stringify({ ok: false, msg: 'Campo inválido' }));
+
+    sheet.getRange(rowIdx + 1, col).setValue(data.value);
+    return ContentService.createTextOutput(JSON.stringify({ ok: true }));
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, msg: err.message }));
+  }
+}
+
+════════════════════════════════════════════════════════
+-->
+
+</body>
+</html>
