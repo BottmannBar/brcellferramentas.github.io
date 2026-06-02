@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BRCELL — Espelho de Estoque</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    :root {
+      --black:      #222323;
+      --graphite:   #1a1a1a;
+      --card:       #212121;
+      --green:      #28a745;
+      --green-dim:  #1d7a34;
+      --green-glow: rgba(40,167,69,0.18);
+      --text:       #e8e8e8;
+      --muted:      #8a8a8a;
+      --border:     rgba(40,167,69,0.15);
+      --divider:    rgba(255,255,255,0.05);
+      --amber:      #f0a500;
+      --red:        #e74c3c;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--black);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      min-height: 100vh;
+      background-image:
+        linear-gradient(var(--divider) 1px, transparent 1px),
+        linear-gradient(90deg, var(--divider) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    header {
+      background: var(--graphite);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(18px, 3vw, 28px);
+      letter-spacing: 3px; color: #fff;
+    }
+    .logo span { color: var(--green); }
+    .logo small { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 400; color: var(--muted); letter-spacing: 0; margin-left: 8px; }
+
+    .toolbar {
+      padding: 14px 20px;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
+    .search-input {
+      width: 100%; background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      padding: 9px 10px 9px 32px; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+    }
+    .search-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-glow); }
+    .search-input::placeholder { color: var(--muted); }
+    .filter-select {
+      background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      padding: 9px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+      cursor: pointer; min-width: 150px;
+    }
+    .filter-select:focus { border-color: var(--green); }
+    .count-badge {
+      background: var(--green-glow); border: 1px solid var(--border);
+      color: var(--green); font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      padding: 6px 12px; border-radius: 20px; white-space: nowrap;
+    }
+
+    /* COPY BAR */
+    .copy-bar {
+      padding: 0 20px 14px;
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .copy-btn {
+      background: var(--graphite); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px;
+      padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { border-color: var(--green); background: rgba(40,167,69,0.08); }
+    .copy-btn i { font-size: 15px; color: var(--green); }
+    .sel-hint { font-size: 11px; color: var(--muted); }
+    .copied-badge {
+      font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 20px;
+      background: rgba(40,167,69,0.15); color: var(--green); border: 1px solid rgba(40,167,69,0.3);
+      opacity: 0; transition: opacity 0.2s; pointer-events: none; display: flex; align-items: center; gap: 5px;
+    }
+    .copied-badge.show { opacity: 1; }
+
+    /* CARD GRID */
+    .grid-wrap { padding: 0 20px 40px; }
+    .device-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+      gap: 10px;
+    }
+    .device-card {
+      background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+      position: relative; user-select: none;
+      animation: fadeIn 0.2s ease both;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+    .device-card:hover { border-color: rgba(40,167,69,0.35); background: rgba(40,167,69,0.04); }
+    .device-card.selected { border: 2px solid var(--green); background: rgba(40,167,69,0.07); }
+    .dc-check {
+      position: absolute; top: 10px; right: 12px;
+      color: var(--green); font-size: 18px;
+      display: none;
+    }
+    .device-card.selected .dc-check { display: block; }
+    .dc-brand {
+      font-size: 10px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+    }
+    .dc-model { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 5px; line-height: 1.3; }
+    .dc-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+    .dc-price { font-size: 16px; font-weight: 700; color: var(--green); }
+
+    /* PREVIEW */
+    .preview-section {
+      margin: 0 20px 30px;
+      background: var(--graphite); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      display: none;
+    }
+    .preview-header {
+      padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--divider);
+      background: rgba(40,167,69,0.06);
+    }
+    .preview-header-left { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--green); letter-spacing: 0.5px; }
+    .preview-header-left i { font-size: 15px; }
+    .preview-actions { display: flex; gap: 6px; }
+    .btn-sm {
+      background: none; border: 1px solid var(--border); color: var(--text);
+      border-radius: 7px; padding: 5px 12px; font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; gap: 5px; transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-sm:hover { border-color: var(--green); }
+    .btn-sm.primary { background: var(--green-dim); border-color: var(--green); color: #fff; }
+    .btn-sm.primary:hover { background: var(--green); }
+    .preview-body { padding: 16px; }
+    .preview-text {
+      font-family: 'DM Sans', monospace; font-size: 12px; color: var(--text);
+      white-space: pre-wrap; line-height: 1.8; word-break: break-word;
+    }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 50px 20px; color: var(--muted); grid-column: 1/-1; }
+    .empty i { font-size: 36px; display: block; margin: 0 auto 12px; opacity: 0.3; }
+
+    /* SPINNER */
+    .spinner {
+      display: inline-block; width: 20px; height: 20px;
+      border: 2px solid var(--border); border-top-color: var(--green);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center; padding: 14px 20px;
+      font-size: 11px; color: var(--muted); letter-spacing: 1px;
+      border-top: 1px solid var(--divider);
+    }
+    footer strong { color: var(--green); }
+
+    @media (max-width: 600px) {
+      header, .toolbar, .copy-bar, .grid-wrap, .preview-section { padding-left: 14px; padding-right: 14px; }
+      .preview-section { margin-left: 14px; margin-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BRCELL <span>—</span><small>Espelho de Estoque</small></div>
+  <div id="copiedBadge" class="copied-badge"><i class="ti ti-check"></i> Copiado!</div>
+</header>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <i class="ti ti-search"></i>
+    <input class="search-input" id="searchInput" type="text" placeholder="Buscar modelo, marca, cor, armazenamento…" oninput="renderCards()" />
+  </div>
+  <select class="filter-select" id="marcaFilter" onchange="renderCards()">
+    <option value="">Todas as marcas</option>
+  </select>
+  <div class="count-badge" id="countBadge">— itens</div>
+</div>
+
+<div class="copy-bar">
+  <button class="copy-btn" onclick="copyAll()">
+    <i class="ti ti-copy"></i> Copiar todos visíveis
+  </button>
+  <button class="copy-btn" onclick="copyByBrand()">
+    <i class="ti ti-devices"></i> Copiar por marca
+  </button>
+  <button class="copy-btn" onclick="copySelected()">
+    <i class="ti ti-checkbox"></i> Copiar selecionados (<span id="selCount">0</span>)
+  </button>
+  <span class="sel-hint">Toque nos cards para selecionar individualmente</span>
+</div>
+
+<div class="preview-section" id="previewSection">
+  <div class="preview-header">
+    <div class="preview-header-left">
+      <i class="ti ti-brand-whatsapp"></i> Prévia do texto para WhatsApp
+    </div>
+    <div class="preview-actions">
+      <button class="btn-sm primary" onclick="doCopy()"><i class="ti ti-copy"></i> Copiar</button>
+      <button class="btn-sm" onclick="closePreview()"><i class="ti ti-x"></i> Fechar</button>
+    </div>
+  </div>
+  <div class="preview-body">
+    <div class="preview-text" id="previewText"></div>
+  </div>
+</div>
+
+<div class="grid-wrap">
+  <div class="device-grid" id="deviceGrid">
+    <div class="empty" style="grid-column:1/-1; text-align:center; padding:40px">
+      <div class="spinner"></div>
+      <div style="margin-top:12px; color:var(--muted)">Carregando aparelhos disponíveis…</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Apenas aparelhos <strong>disponíveis</strong> &nbsp;·&nbsp; <strong>BRCELL</strong> Premium Lab Services
+</footer>
+
+<script>
+const SHEET_ID  = "1sRrPvd9Vk77rrCA78yUG1L3G-xO-1vy_pgdrbrfLGKE";
+const SHEET_TAB = "BANCODEAPARELHOS";
+const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+
+const COL = {
+  id:0, entrada:1, tipo:2, mei:3, marca:4, modelo:5, cor:6,
+  arm:7, bateria:8, custo:9, custoadd:10, preco:11, parcelado:12,
+  margem:13, foramarg:14, status:15, saida:16, estado:17, origem:18, local:19
+};
+
+let DATA = [];
+let selected = new Set();
+let currentPreviewText = '';
+
+function parseCSV(text) {
+  return text.trim().split('\n').slice(1).map(line => {
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') inQ = !inQ;
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function fmtPrice(v) {
+  const n = parseFloat(String(v).replace(/[R$\s.]/g, '').replace(',', '.'));
+  return isNaN(n) ? '—' : 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
+function toLine(r) {
+  const cor   = r.cor ? ` · ${r.cor}` : '';
+  const arm   = r.arm ? ` · ${r.arm}` : '';
+  const preco = r.preco ? ` — ${fmtPrice(r.preco)}` : '';
+  return `📱 ${r.marca} ${r.modelo}${cor}${arm}${preco}`;
+}
+
+function toWhatsText(rows, title) {
+  if (!rows.length) return 'Nenhum aparelho encontrado.';
+  const header = title || '*BRCELL — Estoque Disponível*';
+  return `${header}\n\n` + rows.map(toLine).join('\n') + `\n\n_Preços sujeitos a alteração. Consulte disponibilidade._`;
+}
+
+async function loadSheet() {
+  try {
+    const res  = await fetch(CSV_URL + '&nocache=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const raw  = parseCSV(text);
+
+    DATA = raw
+      .filter(r => r[COL.modelo] && r[COL.modelo].trim())
+      .filter(r => (r[COL.status] || '').toLowerCase() === 'disponivel')
+      .map(r => ({
+        id:     r[COL.id]    || '',
+        marca:  r[COL.marca] || '',
+        modelo: r[COL.modelo]|| '',
+        cor:    r[COL.cor]   || '',
+        arm:    r[COL.arm]   || '',
+        preco:  r[COL.preco] || '',
+      }));
+
+    populateBrandFilter();
+    renderCards();
+  } catch(e) {
+    document.getElementById('deviceGrid').innerHTML =
+      `<div class="empty" style="grid-column:1/-1">
+        <i class="ti ti-alert-circle"></i>
+        Erro ao carregar planilha.<br>
+        <small style="color:var(--muted)">${e.message} — Verifique se o acesso à planilha é público.</small>
+      </div>`;
+  }
+}
+
+function populateBrandFilter() {
+  const sel = document.getElementById('marcaFilter');
+  sel.innerHTML = '<option value="">Todas as marcas</option>';
+  [...new Set(DATA.map(r => r.marca).filter(Boolean))].sort().forEach(m => {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m; sel.appendChild(o);
+  });
+}
+
+function getFiltered() {
+  const q  = (document.getElementById('searchInput').value || '').toLowerCase();
+  const mf = document.getElementById('marcaFilter').value || '';
+  return DATA.filter(r =>
+    (!mf || r.marca === mf) &&
+    (!q  || [r.marca, r.modelo, r.cor, r.arm].some(v => String(v).toLowerCase().includes(q)))
+  );
+}
+
+function renderCards() {
+  const rows = getFiltered();
+  document.getElementById('countBadge').textContent = `${rows.length} ${rows.length === 1 ? 'item' : 'itens'}`;
+  document.getElementById('selCount').textContent   = selected.size;
+
+  const grid = document.getElementById('deviceGrid');
+  if (!rows.length) {
+    grid.innerHTML = `<div class="empty"><i class="ti ti-search-off"></i>Nenhum aparelho disponível com esses filtros.</div>`;
+    return;
+  }
+
+  grid.innerHTML = rows.map((r, i) => {
+    const sel  = selected.has(r.id);
+    const meta = [r.cor, r.arm].filter(Boolean).join(' · ');
+    return `<div class="device-card ${sel ? 'selected' : ''}" onclick="toggleSelect('${r.id}')" style="animation-delay:${Math.min(i*12,250)}ms">
+      <i class="ti ti-check dc-check"></i>
+      <div class="dc-brand">${r.marca || '—'}</div>
+      <div class="dc-model">${r.modelo}</div>
+      ${meta ? `<div class="dc-meta">${meta}</div>` : ''}
+      <div class="dc-price">${r.preco ? fmtPrice(r.preco) : '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSelect(id) {
+  if (selected.has(id)) selected.delete(id);
+  else selected.add(id);
+  document.getElementById('selCount').textContent = selected.size;
+  const card = document.querySelector(`[onclick="toggleSelect('${id}')"]`);
+  if (card) card.classList.toggle('selected', selected.has(id));
+}
+
+function showPreview(text) {
+  currentPreviewText = text;
+  document.getElementById('previewText').textContent = text;
+  document.getElementById('previewSection').style.display = 'block';
+  document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closePreview() {
+  document.getElementById('previewSection').style.display = 'none';
+}
+
+function copyAll() {
+  showPreview(toWhatsText(getFiltered()));
+}
+
+function copyByBrand() {
+  const brand = document.getElementById('marcaFilter').value;
+  if (brand) {
+    const rows = DATA.filter(r => r.marca === brand);
+    showPreview(toWhatsText(rows, `*BRCELL — ${brand}*`));
+  } else {
+    const brands = [...new Set(DATA.map(r => r.marca).filter(Boolean))].sort();
+    const body = brands.map(b => {
+      const rows = DATA.filter(r => r.marca === b);
+      return `*${b.toUpperCase()}*\n` + rows.map(toLine).join('\n');
+    }).join('\n\n');
+    showPreview(`*BRCELL — Estoque por Marca*\n\n${body}\n\n_Preços sujeitos a alteração._`);
+  }
+}
+
+function copySelected() {
+  if (!selected.size) { alert('Selecione ao menos um aparelho nos cards acima.'); return; }
+  const rows = DATA.filter(r => selected.has(r.id));
+  showPreview(toWhatsText(rows));
+}
+
+async function doCopy() {
+  if (!currentPreviewText) return;
+  try {
+    await navigator.clipboard.writeText(currentPreviewText);
+    flashCopied();
+    closePreview();
+  } catch(e) {
+    alert('Não foi possível copiar automaticamente. Selecione o texto na prévia e pressione Ctrl+C.');
+  }
+}
+
+function flashCopied() {
+  const b = document.getElementById('copiedBadge');
+  b.classList.add('show');
+  clearTimeout(b._t);
+  b._t = setTimeout(() => b.classList.remove('show'), 2500);
+}
+
+loadSheet();
+</script>
+</body>
+</html>
