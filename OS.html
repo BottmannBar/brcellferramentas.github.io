@@ -1,274 +1,444 @@
-2V
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BRCELL - Sistema Integrado</title>
+    <title>BRCELL - Nova OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    
     <style>
         body { background-color: #09090b; color: #fafafa; font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(24, 24, 27, 0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
-        input, textarea, select { background-color: #18181b !important; border: 1px solid #27272a !important; color: white !important; font-size: 14px !important; }
-        input:focus { border-color: #22c55e !important; outline: none; box-shadow: 0 0 0 1px #22c55e; }
-        .check-btn { border: 1px solid #27272a; transition: all 0.2s; cursor: pointer; }
-        .check-btn:has(input:checked) { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); color: #22c55e; }
-        canvas { background: #fff; border-radius: 8px; cursor: crosshair; }
-        
+        .glass { background: rgba(24,24,27,0.9); border: 1px solid #27272a; }
+        input, textarea, select {
+            background-color: #18181b !important;
+            border: 1px solid #27272a !important;
+            color: white !important;
+            font-size: 14px !important;
+            transition: border-color 0.15s;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #22c55e !important;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(34,197,94,0.15);
+        }
+        select option { background: #18181b; color: white; }
+        .section-label {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #52525b;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .check-btn {
+            border: 1px solid #27272a;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+        .check-btn:has(input:checked) {
+            border-color: #22c55e;
+            background: rgba(34,197,94,0.08);
+            color: #22c55e;
+        }
+        canvas { background: #fff; border-radius: 8px; cursor: crosshair; width: 100%; display: block; }
         #loadingOverlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(9, 9, 11, 0.95); z-index: 9999;
+            display: none; position: fixed; inset: 0;
+            background: rgba(9,9,11,0.95); z-index: 9999;
             flex-direction: column; align-items: center; justify-content: center;
         }
         .spinner {
-            width: 40px; height: 40px; border: 4px solid #27272a;
-            border-top: 4px solid #22c55e; border-radius: 50%;
-            animation: spin 1s linear infinite;
+            width: 40px; height: 40px;
+            border: 3px solid #27272a;
+            border-top: 3px solid #22c55e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input[type="file"] { color: #71717a; font-size: 12px !important; }
+        input[type="date"] { color-scheme: dark; }
     </style>
 </head>
-<body class="p-4 bg-zinc-950">
+<body class="p-4 min-h-screen">
 
-    <div id="loadingOverlay">
-        <div class="spinner mb-4"></div>
-        <p id="loadingStatus" class="text-green-500 font-black uppercase tracking-widest text-[10px]">Sincronizando BRCELL...</p>
+<div id="loadingOverlay">
+    <div class="spinner mb-4"></div>
+    <p id="loadingStatus" class="text-green-500 font-black uppercase tracking-widest text-[10px]">Sincronizando...</p>
+</div>
+
+<div class="max-w-xl mx-auto mb-12">
+
+    <!-- Header -->
+    <div class="glass rounded-2xl p-5 mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="bg-green-500/20 p-2.5 rounded-xl">
+                <i data-lucide="shield-check" class="text-green-500 w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-tight text-white">BRCELL</h1>
+                <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Nova Ordem de Serviço</p>
+            </div>
+        </div>
+        <a href="log.html" class="flex items-center gap-1.5 text-[10px] font-black text-zinc-400 hover:text-green-400 uppercase tracking-widest border border-zinc-800 hover:border-green-500/40 rounded-xl px-3 py-2 transition-all">
+            <i data-lucide="list" class="w-3.5 h-3.5"></i> Ver OS
+        </a>
     </div>
 
-    <div class="max-w-2xl mx-auto glass-card rounded-2xl p-6 mb-10 shadow-2xl">
-        
-        <div class="mb-8 p-4 bg-green-500/5 rounded-2xl border border-green-500/20">
-            <label class="text-[10px] font-black text-green-500 uppercase tracking-widest mb-2 block">Localizar Cliente (Nome, CPF ou Celular)</label>
-            <div class="relative">
-                <input type="text" id="busca_cliente" placeholder="Digite para pesquisar..." 
-                       class="w-full p-3 pl-10 rounded-xl outline-none border-none focus:ring-1 focus:ring-green-500">
-                <button type="button" onclick="verificarCadastro(document.getElementById('busca_cliente').value)" 
-                        class="absolute right-2 top-2 p-1.5 bg-green-600 rounded-lg hover:bg-green-500 transition-colors">
-                    <i data-lucide="search" class="w-4 h-4 text-white"></i>
-                </button>
-                <i data-lucide="user-search" class="absolute left-3 top-3.5 w-4 h-4 text-zinc-500"></i>
+    <!-- Busca -->
+    <div class="glass rounded-2xl p-4 mb-4">
+        <span class="section-label">Localizar cliente (nome, CPF ou celular)</span>
+        <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-zinc-500 pointer-events-none"></i>
+            <input type="text" id="busca_cliente" placeholder="Digite para buscar cliente..."
+                   class="w-full p-2.5 pl-10 rounded-xl" 
+                   onkeydown="if(event.key==='Enter'){verificarCadastro(this.value)}">
+            <button type="button" onclick="verificarCadastro(document.getElementById('busca_cliente').value)"
+                    class="absolute right-2 top-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-[10px] font-black rounded-lg transition-colors uppercase">
+                Buscar
+            </button>
+        </div>
+    </div>
+
+    <!-- Formulário -->
+    <form id="formOS" class="space-y-3">
+
+        <!-- Datas + Status -->
+        <div class="glass rounded-2xl p-4">
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <span class="section-label">Entrada</span>
+                    <input type="date" id="data_entrada" class="w-full p-2.5 rounded-xl text-xs">
+                </div>
+                <div>
+                    <span class="section-label" style="color:#f59e0b">Previsão</span>
+                    <input type="date" id="data_previsao" class="w-full p-2.5 rounded-xl text-xs">
+                </div>
+                <div>
+                    <span class="section-label">Status</span>
+                    <select id="status" class="w-full p-2.5 rounded-xl text-xs">
+                        <option value="Aguardando">⏳ Aguardando</option>
+                        <option value="Pronto">✅ Pronto</option>
+                        <option value="Entregue">📦 Entregue</option>
+                        <option value="Cancelado">❌ Cancelado</option>
+                    </select>
+                </div>
             </div>
         </div>
 
-        <form id="formGeral" class="space-y-6">
-            
-            <div class="flex items-center justify-between mb-8">
-                <div class="flex items-center gap-3">
-                    <div class="bg-green-500/20 p-3 rounded-xl"><i data-lucide="shield-check" class="text-green-500"></i></div>
-                    <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-white">BRCELL</h1>
-                        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Cadastro & Serviço</p>
-                    </div>
+        <!-- Cliente -->
+        <div class="glass rounded-2xl p-4 space-y-3">
+            <p class="section-label text-zinc-600 mb-1">Dados do cliente</p>
+            <div>
+                <span class="section-label">Nome completo</span>
+                <input type="text" id="nome" placeholder="Nome completo" class="w-full p-2.5 rounded-xl" required>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <span class="section-label">CPF / CNPJ</span>
+                    <input type="text" id="doc_cliente" placeholder="000.000.000-00" class="w-full p-2.5 rounded-xl" onblur="verificarCadastro(this.value)">
                 </div>
-                <div class="flex gap-2">
-                    <div class="text-right">
-                        <label class="text-[8px] font-bold text-zinc-500 uppercase block">Entrada</label>
-                        <input type="date" id="data_entrada" class="bg-zinc-900 border-none text-zinc-300 text-[10px] p-1 rounded outline-none w-28">
-                    </div>
-                    <div class="text-right">
-                        <label class="text-[8px] font-bold text-amber-500 uppercase block">Previsão</label>
-                        <input type="date" id="data_previsao" class="bg-zinc-900 border-none text-amber-500 text-[10px] p-1 rounded outline-none w-28">
-                    </div>
+                <div>
+                    <span class="section-label">E-mail</span>
+                    <input type="email" id="email" placeholder="email@exemplo.com" class="w-full p-2.5 rounded-xl">
                 </div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="md:col-span-2">
-                    <input type="text" id="nome" placeholder="Nome Completo" class="w-full p-3 rounded-xl outline-none" required>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <span class="section-label">Celular 1 (WhatsApp)</span>
+                    <input type="text" id="celular1" oninput="maskTel(this)" placeholder="(00) 00000-0000" class="w-full p-2.5 rounded-xl font-bold text-green-400" required>
                 </div>
-                <input type="text" id="doc_cliente" onblur="verificarCadastro(this.value)" placeholder="CPF / CNPJ" class="w-full p-3 rounded-xl outline-none" required>
-                <input type="email" id="email" placeholder="E-mail" class="w-full p-3 rounded-xl outline-none">
-                <input type="text" id="celular1" oninput="maskTel(this)" placeholder="Celular 1 (WhatsApp)" class="w-full p-3 rounded-xl outline-none font-bold text-green-400" required>
-                <input type="text" id="celular2" oninput="maskTel(this)" placeholder="Celular 2 / Recado" class="w-full p-3 rounded-xl outline-none">
-            </div>
-
-            <div class="space-y-4 p-4 bg-zinc-900/30 rounded-2xl border border-zinc-800">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="cep" onblur="buscarCEP(this.value)" placeholder="CEP" class="p-3 rounded-xl outline-none">
-                    <input type="text" id="endereco" placeholder="Rua" class="md:col-span-2 p-3 rounded-xl outline-none">
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <input type="text" id="numero" placeholder="Nº" class="p-3 rounded-xl outline-none">
-                    <input type="text" id="complemento" placeholder="Comp." class="p-3 rounded-xl outline-none">
-                    <input type="text" id="bairro" placeholder="Bairro" class="p-3 rounded-xl outline-none">
-                    <input type="text" id="cidade_uf" placeholder="Cidade-UF" class="p-3 rounded-xl outline-none">
+                <div>
+                    <span class="section-label">Celular 2</span>
+                    <input type="text" id="celular2" oninput="maskTel(this)" placeholder="(00) 00000-0000" class="w-full p-2.5 rounded-xl">
                 </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" id="aparelho" placeholder="Modelo Aparelho" class="w-full p-3 rounded-xl outline-none" required>
-                <input type="text" id="senha" placeholder="Senha" class="w-full p-3 rounded-xl outline-none border-amber-900/20">
-            </div>
-            <textarea id="problema" placeholder="Defeito Relatado" class="w-full p-4 rounded-xl outline-none h-24 border-red-900/20"></textarea>
-
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <label class="check-btn flex items-center justify-center p-3 rounded-xl text-[10px] font-black gap-2 col-span-full border-red-900/50 text-red-400">
-                        <input type="checkbox" id="desligado" class="hidden" onchange="toggleDesligado(this)"> 
-                        <i data-lucide="power-off"></i> DESLIGADO TOTALMENTE
-                    </label>
-                    <label class="check-btn flex items-center gap-2 p-3 rounded-xl text-[10px] item-check uppercase"><input type="checkbox" name="checklist" value="Tela OK" class="hidden"> Tela OK</label>
-                    <label class="check-btn flex items-center gap-2 p-3 rounded-xl text-[10px] item-check uppercase"><input type="checkbox" name="checklist" value="Touch OK" class="hidden"> Touch OK</label>
-                    <label class="check-btn flex items-center gap-2 p-3 rounded-xl text-[10px] item-check uppercase"><input type="checkbox" name="checklist" value="Carga OK" class="hidden"> Carga OK</label>
+        <!-- Endereço -->
+        <div class="glass rounded-2xl p-4 space-y-3">
+            <p class="section-label text-zinc-600 mb-1">Endereço</p>
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <span class="section-label">CEP</span>
+                    <input type="text" id="cep" onblur="buscarCEP(this.value)" placeholder="00000-000" class="w-full p-2.5 rounded-xl">
+                </div>
+                <div class="col-span-2">
+                    <span class="section-label">Rua / Logradouro</span>
+                    <input type="text" id="endereco" placeholder="Rua..." class="w-full p-2.5 rounded-xl">
                 </div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-zinc-900/40 rounded-2xl border border-zinc-800">
-                <input type="file" id="fotoFrente" accept="image/*" capture="camera" class="w-full text-xs text-zinc-500">
-                <input type="file" id="fotoVerso" accept="image/*" capture="camera" class="w-full text-xs text-zinc-500">
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <span class="section-label">Nº</span>
+                    <input type="text" id="numero" placeholder="Nº" class="w-full p-2.5 rounded-xl">
+                </div>
+                <div>
+                    <span class="section-label">Comp.</span>
+                    <input type="text" id="complemento" placeholder="Apto" class="w-full p-2.5 rounded-xl">
+                </div>
+                <div>
+                    <span class="section-label">Bairro</span>
+                    <input type="text" id="bairro" placeholder="Bairro" class="w-full p-2.5 rounded-xl">
+                </div>
+                <div>
+                    <span class="section-label">Cidade-UF</span>
+                    <input type="text" id="cidade_uf" placeholder="Cidade-UF" class="w-full p-2.5 rounded-xl">
+                </div>
             </div>
+        </div>
 
-            <div class="space-y-2">
-                <label class="text-[10px] font-bold text-zinc-500 uppercase flex justify-between">Assinatura <button type="button" onclick="pad.clear()" class="text-red-500 underline uppercase">Limpar</button></label>
-                <canvas id="signature-pad" class="w-full h-32 border border-zinc-800"></canvas>
+        <!-- Aparelho -->
+        <div class="glass rounded-2xl p-4 space-y-3">
+            <p class="section-label text-zinc-600 mb-1">Aparelho & Serviço</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <span class="section-label">Modelo do aparelho</span>
+                    <input type="text" id="aparelho" placeholder="Ex: iPhone 14 Pro" class="w-full p-2.5 rounded-xl" required>
+                </div>
+                <div>
+                    <span class="section-label">Senha / PIN</span>
+                    <input type="text" id="senha" placeholder="Senha do aparelho" class="w-full p-2.5 rounded-xl">
+                </div>
             </div>
-
-            <div class="flex flex-col items-center">
-                <input type="text" id="valor_servico" oninput="maskMoney(this)" class="w-full bg-transparent text-3xl font-black text-center text-white outline-none mb-4" placeholder="R$ 0,00">
-                <button type="submit" id="btnEnviar" class="w-full bg-green-600 hover:bg-green-500 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 uppercase italic">
-                    <i data-lucide="save"></i> Salvar Tudo
-                </button>
+            <div>
+                <span class="section-label">Defeito relatado</span>
+                <textarea id="problema" placeholder="Descreva o defeito relatado pelo cliente..." class="w-full p-2.5 rounded-xl h-20"></textarea>
             </div>
-        </form>
-    </div>
+        </div>
 
-    <script>
-        const canvas = document.getElementById("signature-pad");
-        const pad = new SignaturePad(canvas);
-        const loading = document.getElementById('loadingOverlay');
+        <!-- Checklist -->
+        <div class="glass rounded-2xl p-4">
+            <p class="section-label text-zinc-600 mb-3">Checklist de condições</p>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="check-btn flex items-center gap-2 p-2.5 text-[11px] font-bold text-red-400 border-red-900/40 col-span-2">
+                    <input type="checkbox" id="desligado" class="hidden" onchange="toggleDesligado(this)">
+                    <i data-lucide="power-off" class="w-4 h-4"></i> Dispositivo desligado
+                </label>
+                <label class="check-btn flex items-center gap-2 p-2.5 text-[11px] font-bold text-zinc-400 item-check">
+                    <input type="checkbox" name="checklist" value="Tela OK" class="hidden">
+                    <i data-lucide="monitor" class="w-4 h-4"></i> Tela OK
+                </label>
+                <label class="check-btn flex items-center gap-2 p-2.5 text-[11px] font-bold text-zinc-400 item-check">
+                    <input type="checkbox" name="checklist" value="Touch OK" class="hidden">
+                    <i data-lucide="hand" class="w-4 h-4"></i> Touch OK
+                </label>
+                <label class="check-btn flex items-center gap-2 p-2.5 text-[11px] font-bold text-zinc-400 item-check">
+                    <input type="checkbox" name="checklist" value="Carga OK" class="hidden">
+                    <i data-lucide="battery-charging" class="w-4 h-4"></i> Carga OK
+                </label>
+                <label class="check-btn flex items-center gap-2 p-2.5 text-[11px] font-bold text-zinc-400 item-check">
+                    <input type="checkbox" name="checklist" value="Câmera OK" class="hidden">
+                    <i data-lucide="camera" class="w-4 h-4"></i> Câmera OK
+                </label>
+                <label class="check-btn flex items-center gap-2 p-2.5 text-[11px] font-bold text-zinc-400 item-check">
+                    <input type="checkbox" name="checklist" value="Botões OK" class="hidden">
+                    <i data-lucide="circle-dot" class="w-4 h-4"></i> Botões OK
+                </label>
+                <label class="check-btn flex items-center gap-2 p-2.5 text-[11px] font-bold text-zinc-400 item-check">
+                    <input type="checkbox" name="checklist" value="Som OK" class="hidden">
+                    <i data-lucide="volume-2" class="w-4 h-4"></i> Som OK
+                </label>
+            </div>
+        </div>
 
-        // URLs DE IMPLANTAÇÃO (Atualizadas)
-        const URL_CADASTRO = "https://script.google.com/macros/s/AKfycbwMl9MwzfwJeCV2zvsuOhiYJ4X0ZA1UHVRuWny23pkG-3WCfrYPP5iYcCV0-dTkwI1fsw/exec";
-        const URL_SERVICO  = "https://script.google.com/macros/s/AKfycbw7aF7vPnHfXfmNK37a1Q_Cjk8pUpzMJrKOBVL4j4tna8vqn3ocmFU4v7jP7jIaDwvL/exec";
+        <!-- Fotos -->
+        <div class="glass rounded-2xl p-4 space-y-3">
+            <p class="section-label text-zinc-600 mb-1">Fotos do aparelho</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <span class="section-label">Frente</span>
+                    <input type="file" id="fotoFrente" accept="image/*" capture="camera" class="w-full p-2 rounded-xl border border-zinc-800 text-zinc-500">
+                </div>
+                <div>
+                    <span class="section-label">Verso</span>
+                    <input type="file" id="fotoVerso" accept="image/*" capture="camera" class="w-full p-2 rounded-xl border border-zinc-800 text-zinc-500">
+                </div>
+            </div>
+        </div>
 
-        document.getElementById('data_entrada').valueAsDate = new Date();
+        <!-- Assinatura -->
+        <div class="glass rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="section-label">Assinatura do cliente</span>
+                <button type="button" onclick="pad.clear()" class="text-[10px] font-bold text-red-500 hover:text-red-400 uppercase tracking-widest">Limpar</button>
+            </div>
+            <canvas id="signature-pad" class="h-28 rounded-xl border border-zinc-800"></canvas>
+        </div>
 
-        async function verificarCadastro(termo) {
-            if (termo.length < 3) return;
-            loading.style.display = 'flex';
-            try {
-                const res = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({ acao: "buscar", termo: termo }) });
-                const d = await res.json();
-                if (d.status === "encontrado") {
-                    document.getElementById('nome').value = d.c.nome || "";
-                    document.getElementById('doc_cliente').value = d.c.doc || "";
-                    document.getElementById('email').value = d.c.email || "";
-                    document.getElementById('celular1').value = d.c.cel1 || "";
-                    document.getElementById('celular2').value = d.c.cel2 || "";
-                    document.getElementById('endereco').value = d.c.end || "";
-                    document.getElementById('numero').value = d.c.num || "";
-                    document.getElementById('complemento').value = d.c.comp || "";
-                    document.getElementById('bairro').value = d.c.bairro || "";
-                    document.getElementById('cep').value = d.c.cep || "";
-                    document.getElementById('cidade_uf').value = (d.c.cid && d.c.uf) ? `${d.c.cid} - ${d.c.uf}` : d.c.cid || "";
-                }
-            } catch (e) { console.error(e); }
-            loading.style.display = 'none';
-        }
+        <!-- Valor -->
+        <div class="glass rounded-2xl p-5">
+            <span class="section-label text-center block mb-2">Valor do serviço</span>
+            <input type="text" id="valor_servico" oninput="maskMoney(this)" class="w-full bg-transparent text-4xl font-black text-center text-white outline-none border-none !border-0 !bg-transparent shadow-none" placeholder="R$ 0,00" style="border:none!important;background:transparent!important">
+        </div>
 
-        function toggleDesligado(el) {
-            document.querySelectorAll('.item-check input').forEach(c => {
-                c.checked = false;
-                c.closest('label').style.opacity = el.checked ? "0.2" : "1";
-                c.disabled = el.checked;
-            });
-        }
+        <!-- Ações -->
+        <div class="grid grid-cols-1 gap-3">
+            <button type="submit" id="btnEnviar" class="w-full bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 uppercase text-sm transition-colors">
+                <i data-lucide="save" class="w-4 h-4"></i> Salvar OS
+            </button>
+        </div>
 
-        document.getElementById('formGeral').onsubmit = async (e) => {
-            e.preventDefault();
-            if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
-            loading.style.display = 'flex';
+    </form>
+</div>
 
-            const toB64 = f => new Promise(res => { 
-                if(!f) return res(""); 
-                const r = new FileReader(); 
-                r.onload = () => res(r.result); 
-                r.readAsDataURL(f); 
-            });
-            
-            const dadosBase = {
-                nome: document.getElementById('nome').value,
-                doc: document.getElementById('doc_cliente').value,
-                email: document.getElementById('email').value,
-                cel1: document.getElementById('celular1').value,
-                cel2: document.getElementById('celular2').value,
-                end: document.getElementById('endereco').value,
-                num: document.getElementById('numero').value,
-                comp: document.getElementById('complemento').value,
-                bairro: document.getElementById('bairro').value,
-                cep: document.getElementById('cep').value,
-                cid_uf: document.getElementById('cidade_uf').value
-            };
+<script>
+    const canvas = document.getElementById("signature-pad");
+    const pad = new SignaturePad(canvas);
+    const loading = document.getElementById('loadingOverlay');
+    const loadingStatus = document.getElementById('loadingStatus');
 
-            const fotoFrente = await toB64(document.getElementById('fotoFrente').files[0]);
-            const fotoVerso = await toB64(document.getElementById('fotoVerso').files[0]);
+    const URL_CADASTRO = "https://script.google.com/macros/s/AKfycbwMl9MwzfwJeCV2zvsuOhiYJ4X0ZA1UHVRuWny23pkG-3WCfrYPP5iYcCV0-dTkwI1fsw/exec";
+    const URL_SERVICO  = "https://script.google.com/macros/s/AKfycbw7aF7vPnHfXfmNK37a1Q_Cjk8pUpzMJrKOBVL4j4tna8vqn3ocmFU4v7jP7jIaDwvL/exec";
 
-            const dadosServico = {
-                aparelho: document.getElementById('aparelho').value,
-                senha: document.getElementById('senha').value,
-                problema: document.getElementById('problema').value,
-                valor: document.getElementById('valor_servico').value,
-                checklist: document.getElementById('desligado').checked ? "DESLIGADO" : [...document.querySelectorAll('input[name="checklist"]:checked')].map(s => s.value).join(", "),
-                assinatura: pad.toDataURL(),
-                fotoFrente: fotoFrente,
-                fotoVerso: fotoVerso,
-                data_entrada: document.getElementById('data_entrada').value,
-                data_previsao: document.getElementById('data_previsao').value
-            };
+    document.getElementById('data_entrada').valueAsDate = new Date();
 
-            try {
-                // 1. SALVAR CADASTRO
-                document.getElementById('loadingStatus').innerText = "Atualizando Cadastro...";
-                const resCad = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({acao: "salvar", ...dadosBase}) });
-                const dataCad = await resCad.json();
-                
-                if (dataCad.status === "sucesso") {
-                    const idOficial = dataCad.id;
+    function resize() {
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        pad.clear();
+    }
+    window.onresize = resize;
+    setTimeout(resize, 100);
 
-                    // 2. SALVAR SERVIÇO
-                    document.getElementById('loadingStatus').innerText = "Sincronizando OS #" + idOficial + "...";
-                    await fetch(URL_SERVICO, { 
-                        method: 'POST', 
-                        mode: 'no-cors',
-                        body: JSON.stringify({id: idOficial, ...dadosBase, ...dadosServico}) 
-                    });
-
-                    alert("BRCELL: OS #" + idOficial + " salva com sucesso!");
-                    location.reload();
-                }
-            } catch (err) { 
-                alert("Erro ao salvar. Verifique sua conexão."); 
+    async function verificarCadastro(termo) {
+        if (!termo || termo.length < 3) return;
+        loadingStatus.innerText = 'Buscando cliente...';
+        loading.style.display = 'flex';
+        try {
+            const res = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({ acao: "buscar", termo }) });
+            const d = await res.json();
+            if (d.status === "encontrado") {
+                document.getElementById('nome').value       = d.c.nome   || "";
+                document.getElementById('doc_cliente').value= d.c.doc    || "";
+                document.getElementById('email').value      = d.c.email  || "";
+                document.getElementById('celular1').value   = d.c.cel1   || "";
+                document.getElementById('celular2').value   = d.c.cel2   || "";
+                document.getElementById('endereco').value   = d.c.end    || "";
+                document.getElementById('numero').value     = d.c.num    || "";
+                document.getElementById('complemento').value= d.c.comp   || "";
+                document.getElementById('bairro').value     = d.c.bairro || "";
+                document.getElementById('cep').value        = d.c.cep    || "";
+                document.getElementById('cidade_uf').value  = (d.c.cid && d.c.uf) ? `${d.c.cid} - ${d.c.uf}` : d.c.cid || "";
+            } else {
+                alert("Cliente não encontrado. Preencha os dados manualmente.");
             }
-            loading.style.display = 'none';
+        } catch(e) { console.error(e); }
+        loading.style.display = 'none';
+    }
+
+    function toggleDesligado(el) {
+        document.querySelectorAll('.item-check input').forEach(c => {
+            c.checked = false;
+            c.closest('label').style.opacity = el.checked ? "0.3" : "1";
+            c.disabled = el.checked;
+        });
+    }
+
+    document.getElementById('formOS').onsubmit = async (e) => {
+        e.preventDefault();
+        if (pad.isEmpty()) { alert("Assinatura obrigatória!"); return; }
+        loading.style.display = 'flex';
+        loadingStatus.innerText = 'Salvando OS...';
+
+        const toB64 = f => new Promise(res => {
+            if (!f) return res("");
+            const r = new FileReader();
+            r.onload = () => res(r.result);
+            r.readAsDataURL(f);
+        });
+
+        const fotoFrente = await toB64(document.getElementById('fotoFrente').files[0]);
+        const fotoVerso  = await toB64(document.getElementById('fotoVerso').files[0]);
+
+        const dadosBase = {
+            nome:   document.getElementById('nome').value,
+            doc:    document.getElementById('doc_cliente').value,
+            email:  document.getElementById('email').value,
+            cel1:   document.getElementById('celular1').value,
+            cel2:   document.getElementById('celular2').value,
+            end:    document.getElementById('endereco').value,
+            num:    document.getElementById('numero').value,
+            comp:   document.getElementById('complemento').value,
+            bairro: document.getElementById('bairro').value,
+            cep:    document.getElementById('cep').value,
+            cid_uf: document.getElementById('cidade_uf').value
         };
 
-        function maskTel(v) { v.value = v.value.replace(/\D/g, "").replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2").substring(0, 15); }
-        function maskMoney(v) { let val = v.value.replace(/\D/g, ""); val = (val / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); v.value = val; }
-        
-        async function buscarCEP(cep) {
-            const clean = cep.replace(/\D/g, '');
-            if (clean.length === 8) {
-                const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+        const dadosServico = {
+            status:        document.getElementById('status').value,
+            aparelho:      document.getElementById('aparelho').value,
+            senha:         document.getElementById('senha').value,
+            problema:      document.getElementById('problema').value,
+            valor:         document.getElementById('valor_servico').value,
+            checklist:     document.getElementById('desligado').checked
+                            ? "DESLIGADO"
+                            : [...document.querySelectorAll('input[name="checklist"]:checked')].map(s => s.value).join(", "),
+            assinatura:    pad.toDataURL(),
+            fotoFrente,
+            fotoVerso,
+            data_entrada:  document.getElementById('data_entrada').value,
+            data_previsao: document.getElementById('data_previsao').value
+        };
+
+        try {
+            loadingStatus.innerText = 'Atualizando cadastro...';
+            const resCad = await fetch(URL_CADASTRO, { method: 'POST', body: JSON.stringify({ acao: "salvar", ...dadosBase }) });
+            const dataCad = await resCad.json();
+
+            if (dataCad.status === "sucesso") {
+                const idOficial = dataCad.id;
+                loadingStatus.innerText = 'Sincronizando OS #' + idOficial + '...';
+                await fetch(URL_SERVICO, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ id: idOficial, ...dadosBase, ...dadosServico })
+                });
+
+                loading.style.display = 'none';
+                const irLog = confirm(`OS #${idOficial} salva com sucesso!\n\nDeseja ver todas as ordens de serviço?`);
+                if (irLog) window.location.href = 'log.html';
+                else location.reload();
+            } else {
+                loading.style.display = 'none';
+                alert("Erro ao salvar cadastro.");
+            }
+        } catch(err) {
+            loading.style.display = 'none';
+            alert("Erro de conexão. Verifique sua internet.");
+        }
+    };
+
+    function maskTel(v) {
+        v.value = v.value.replace(/\D/g,"")
+            .replace(/^(\d{2})(\d)/g,"($1) $2")
+            .replace(/(\d{5})(\d)/,"$1-$2")
+            .substring(0,15);
+    }
+    function maskMoney(v) {
+        let val = v.value.replace(/\D/g,"");
+        val = (parseInt(val||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+        v.value = val;
+    }
+    async function buscarCEP(cep) {
+        const c = cep.replace(/\D/g,'');
+        if (c.length === 8) {
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${c}/json/`);
                 const d = await res.json();
                 if (!d.erro) {
-                    document.getElementById('endereco').value = d.logradouro;
-                    document.getElementById('bairro').value = d.bairro;
+                    document.getElementById('endereco').value  = d.logradouro;
+                    document.getElementById('bairro').value    = d.bairro;
                     document.getElementById('cidade_uf').value = `${d.localidade} - ${d.uf}`;
                 }
-            }
+            } catch(e) {}
         }
-        function resize() {
-            const ratio = window.devicePixelRatio || 1;
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            pad.clear();
-        }
-        window.onresize = resize; resize();
-        lucide.createIcons();
-    </script>
+    }
+
+    lucide.createIcons();
+</script>
 </body>
 </html>
