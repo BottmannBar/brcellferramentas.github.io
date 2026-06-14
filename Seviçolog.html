@@ -8,610 +8,467 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
-
         * { box-sizing: border-box; }
         body { background-color: #09090b; color: #fafafa; font-family: 'Inter', sans-serif; }
-
-        .glass-card { background: rgba(24, 24, 27, 0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
-
+        .glass-card { background: rgba(24,24,27,0.8); border: 1px solid #27272a; backdrop-filter: blur(10px); }
         input, textarea, select {
-            background-color: #18181b !important;
-            border: 1px solid #27272a !important;
-            color: white !important;
-            font-size: 14px !important;
-            transition: border-color 0.15s;
+            background-color: #18181b !important; border: 1px solid #27272a !important;
+            color: white !important; font-size: 14px !important; transition: border-color 0.15s;
         }
         input:focus, textarea:focus, select:focus {
-            border-color: #22c55e !important;
-            outline: none;
-            box-shadow: 0 0 0 1px rgba(34,197,94,0.3);
+            border-color: #22c55e !important; outline: none; box-shadow: 0 0 0 1px rgba(34,197,94,0.3);
         }
         select option { background: #18181b; color: white; }
-
-        /* OS Card */
         .os-card {
-            background: rgba(24, 24, 27, 0.6);
-            border: 1px solid #27272a;
-            border-radius: 14px;
-            padding: 16px;
-            cursor: pointer;
-            transition: border-color 0.2s, background 0.2s, transform 0.15s;
-            position: relative;
-            overflow: hidden;
+            background: rgba(24,24,27,0.6); border: 1px solid #27272a; border-radius: 14px;
+            padding: 16px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
         }
         .os-card::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 3px;
-            background: #27272a;
-            transition: background 0.2s;
+            content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+            background:#27272a; transition: background 0.2s;
         }
-        .os-card:hover { border-color: #3f3f46; background: rgba(39,39,42,0.6); transform: translateY(-1px); }
-        .os-card:hover::before { background: #22c55e; }
-        .os-card.status-aguardando::before { background: #f59e0b; }
-        .os-card.status-pronto::before { background: #22c55e; }
-        .os-card.status-entregue::before { background: #3b82f6; }
-        .os-card.status-cancelado::before { background: #ef4444; }
-
-        /* Status badges */
-        .badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 2px 8px; border-radius: 999px;
-            font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-        }
-        .badge-aguardando { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
-        .badge-pronto     { background: rgba(34,197,94,0.15);  color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
-        .badge-entregue   { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-        .badge-cancelado  { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-
-        /* Loading overlay */
+        .os-card:hover { border-color:#3f3f46; background:rgba(39,39,42,0.6); transform:translateY(-1px); }
+        .os-card:hover::before, .os-card.status-aguardando::before { background:#f59e0b; }
+        .os-card.status-pronto::before   { background:#22c55e; }
+        .os-card.status-entregue::before { background:#3b82f6; }
+        .os-card.status-cancelado::before{ background:#ef4444; }
+        .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; font-size:9px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; }
+        .badge-aguardando { background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); }
+        .badge-pronto     { background:rgba(34,197,94,0.15);  color:#22c55e; border:1px solid rgba(34,197,94,0.3); }
+        .badge-entregue   { background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); }
+        .badge-cancelado  { background:rgba(239,68,68,0.15);  color:#f87171; border:1px solid rgba(239,68,68,0.3); }
         #loadingOverlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(9,9,11,0.95); z-index: 9999;
-            flex-direction: column; align-items: center; justify-content: center;
+            display:none; position:fixed; inset:0; background:rgba(9,9,11,0.95); z-index:9999;
+            flex-direction:column; align-items:center; justify-content:center;
         }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid #27272a;
-            border-top: 4px solid #22c55e; border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Modal */
-        #modal {
-            display: none; position: fixed; inset: 0; z-index: 1000;
-            background: rgba(9,9,11,0.9); backdrop-filter: blur(6px);
-            overflow-y: auto; padding: 16px;
-        }
-        #modal.open { display: flex; align-items: flex-start; justify-content: center; }
-        .modal-box {
-            background: #111113; border: 1px solid #27272a;
-            border-radius: 20px; width: 100%; max-width: 680px;
-            margin: auto; padding: 24px;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
-        }
-
-        /* Empty state */
-        .empty-state { text-align: center; padding: 60px 20px; }
-        .empty-state svg { margin: 0 auto 16px; opacity: 0.2; }
-
-        /* Filter bar */
-        .filter-input {
-            background: #18181b !important;
-            border: 1px solid #27272a !important;
-            color: white !important;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 13px;
-            width: 100%;
-        }
-        .filter-input:focus { border-color: #22c55e !important; outline: none; }
-
-        /* Section label */
-        .section-label {
-            font-size: 9px; font-weight: 800; letter-spacing: 0.12em;
-            text-transform: uppercase; color: #52525b; margin-bottom: 6px; display: block;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
-
-        /* Toast */
-        #toast {
-            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-            background: #18181b; border: 1px solid #27272a; border-radius: 12px;
-            padding: 12px 20px; font-size: 13px; font-weight: 600;
-            z-index: 99999; transition: transform 0.3s ease;
-            display: flex; align-items: center; gap-8px; gap: 8px;
-            white-space: nowrap;
-        }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-        #toast.success { border-color: rgba(34,197,94,0.5); color: #22c55e; }
-        #toast.error { border-color: rgba(239,68,68,0.5); color: #f87171; }
-
-        .check-btn { border: 1px solid #27272a; transition: all 0.2s; cursor: pointer; border-radius: 10px; }
-        .check-btn:has(input:checked) { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+        .spinner { width:40px; height:40px; border:4px solid #27272a; border-top:4px solid #22c55e; border-radius:50%; animation:spin 1s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        #modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(9,9,11,0.9); backdrop-filter:blur(6px); overflow-y:auto; padding:16px; }
+        #modal.open { display:flex; align-items:flex-start; justify-content:center; }
+        .modal-box { background:#111113; border:1px solid #27272a; border-radius:20px; width:100%; max-width:680px; margin:auto; padding:24px; box-shadow:0 25px 60px rgba(0,0,0,0.6); }
+        .section-label { font-size:9px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:#52525b; margin-bottom:6px; display:block; }
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-thumb { background:#27272a; border-radius:3px; }
+        #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:#18181b; border:1px solid #27272a; border-radius:12px; padding:12px 20px; font-size:13px; font-weight:600; z-index:99999; transition:transform 0.3s ease; display:flex; align-items:center; gap:8px; white-space:nowrap; }
+        #toast.show { transform:translateX(-50%) translateY(0); }
+        #toast.success { border-color:rgba(34,197,94,0.5); color:#22c55e; }
+        #toast.error   { border-color:rgba(239,68,68,0.5);  color:#f87171; }
+        .filter-input { background:#18181b !important; border:1px solid #27272a !important; color:white !important; border-radius:10px; padding:10px 14px; font-size:13px; width:100%; }
+        .filter-input:focus { border-color:#22c55e !important; outline:none; }
     </style>
 </head>
 <body class="min-h-screen p-4">
 
-    <!-- Loading -->
-    <div id="loadingOverlay">
-        <div class="spinner mb-4"></div>
-        <p id="loadingStatus" class="text-green-500 font-black uppercase tracking-widest text-[10px]">Carregando OS...</p>
+<div id="loadingOverlay">
+    <div class="spinner mb-4"></div>
+    <p id="loadingStatus" class="text-green-500 font-black uppercase tracking-widest text-[10px]">Carregando OS...</p>
+</div>
+
+<div id="toast"></div>
+
+<!-- Modal -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div class="bg-green-500/20 p-2.5 rounded-xl"><i data-lucide="file-text" class="text-green-500 w-5 h-5"></i></div>
+        <div>
+          <h2 class="text-lg font-black text-white tracking-tight">OS <span id="modal-id" class="text-green-500"></span></h2>
+          <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Visualizar & Editar</p>
+        </div>
+      </div>
+      <button onclick="fecharModal()" class="p-2 rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors">
+        <i data-lucide="x" class="w-4 h-4 text-zinc-400"></i>
+      </button>
     </div>
 
-    <!-- Toast -->
-    <div id="toast"></div>
+    <form id="formEdicao" class="space-y-5" onsubmit="salvarEdicao(event)">
+      <input type="hidden" id="edit-id">
 
-    <!-- Modal de Visualização / Edição -->
-    <div id="modal">
-        <div class="modal-box">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="bg-green-500/20 p-2.5 rounded-xl">
-                        <i data-lucide="file-text" class="text-green-500 w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-black text-white tracking-tight">OS <span id="modal-id" class="text-green-500"></span></h2>
-                        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Visualizar & Editar</p>
-                    </div>
-                </div>
-                <button onclick="fecharModal()" class="p-2 rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors">
-                    <i data-lucide="x" class="w-4 h-4 text-zinc-400"></i>
-                </button>
-            </div>
-
-            <form id="formEdicao" class="space-y-5" onsubmit="salvarEdicao(event)">
-                <input type="hidden" id="edit-id">
-
-                <!-- Datas -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <span class="section-label">Entrada</span>
-                        <input type="date" id="edit-data_entrada" class="w-full p-3 rounded-xl">
-                    </div>
-                    <div>
-                        <span class="section-label text-amber-500">Previsão</span>
-                        <input type="date" id="edit-data_previsao" class="w-full p-3 rounded-xl">
-                    </div>
-                </div>
-
-                <!-- Status -->
-                <div>
-                    <span class="section-label">Status da OS</span>
-                    <select id="edit-status" class="w-full p-3 rounded-xl">
-                        <option value="Aguardando">⏳ Aguardando</option>
-                        <option value="Pronto">✅ Pronto</option>
-                        <option value="Entregue">📦 Entregue</option>
-                        <option value="Cancelado">❌ Cancelado</option>
-                    </select>
-                </div>
-
-                <!-- Divisor -->
-                <div class="border-t border-zinc-800 pt-4">
-                    <p class="section-label text-zinc-600 mb-3">Dados do Cliente</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="md:col-span-2">
-                            <span class="section-label">Nome</span>
-                            <input type="text" id="edit-nome" placeholder="Nome Completo" class="w-full p-3 rounded-xl">
-                        </div>
-                        <div>
-                            <span class="section-label">CPF / CNPJ</span>
-                            <input type="text" id="edit-doc" placeholder="CPF / CNPJ" class="w-full p-3 rounded-xl">
-                        </div>
-                        <div>
-                            <span class="section-label">E-mail</span>
-                            <input type="email" id="edit-email" placeholder="E-mail" class="w-full p-3 rounded-xl">
-                        </div>
-                        <div>
-                            <span class="section-label">Celular 1</span>
-                            <input type="text" id="edit-cel1" oninput="maskTel(this)" placeholder="(00) 00000-0000" class="w-full p-3 rounded-xl font-bold text-green-400">
-                        </div>
-                        <div>
-                            <span class="section-label">Celular 2</span>
-                            <input type="text" id="edit-cel2" oninput="maskTel(this)" placeholder="(00) 00000-0000" class="w-full p-3 rounded-xl">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Endereço -->
-                <div class="space-y-3 p-4 bg-zinc-900/30 rounded-2xl border border-zinc-800">
-                    <p class="section-label text-zinc-600">Endereço</p>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <span class="section-label">CEP</span>
-                            <input type="text" id="edit-cep" placeholder="CEP" class="w-full p-3 rounded-xl">
-                        </div>
-                        <div class="col-span-2">
-                            <span class="section-label">Rua</span>
-                            <input type="text" id="edit-end" placeholder="Rua" class="w-full p-3 rounded-xl">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div>
-                            <span class="section-label">Nº</span>
-                            <input type="text" id="edit-num" placeholder="Nº" class="w-full p-3 rounded-xl">
-                        </div>
-                        <div>
-                            <span class="section-label">Comp.</span>
-                            <input type="text" id="edit-comp" placeholder="Comp." class="w-full p-3 rounded-xl">
-                        </div>
-                        <div>
-                            <span class="section-label">Bairro</span>
-                            <input type="text" id="edit-bairro" placeholder="Bairro" class="w-full p-3 rounded-xl">
-                        </div>
-                        <div>
-                            <span class="section-label">Cidade - UF</span>
-                            <input type="text" id="edit-cidade_uf" placeholder="Cidade - UF" class="w-full p-3 rounded-xl">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Serviço -->
-                <div class="border-t border-zinc-800 pt-4 space-y-3">
-                    <p class="section-label text-zinc-600">Dados do Serviço</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <span class="section-label">Aparelho</span>
-                            <input type="text" id="edit-aparelho" placeholder="Modelo do Aparelho" class="w-full p-3 rounded-xl">
-                        </div>
-                        <div>
-                            <span class="section-label">Senha</span>
-                            <input type="text" id="edit-senha" placeholder="Senha do aparelho" class="w-full p-3 rounded-xl">
-                        </div>
-                    </div>
-                    <div>
-                        <span class="section-label">Defeito Relatado</span>
-                        <textarea id="edit-problema" placeholder="Descreva o defeito..." class="w-full p-3 rounded-xl h-24"></textarea>
-                    </div>
-                    <div>
-                        <span class="section-label">Checklist</span>
-                        <input type="text" id="edit-checklist" placeholder="Tela OK, Touch OK, Carga OK..." class="w-full p-3 rounded-xl">
-                    </div>
-                    <div>
-                        <span class="section-label">Valor do Serviço</span>
-                        <input type="text" id="edit-valor" oninput="maskMoney(this)" placeholder="R$ 0,00" class="w-full p-3 rounded-xl text-xl font-black text-center text-white">
-                    </div>
-                </div>
-
-                <!-- Ações -->
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="fecharModal()" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 hover:border-zinc-500 font-bold text-sm transition-colors">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-black text-sm transition-colors flex items-center justify-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
-                    </button>
-                </div>
-            </form>
+      <!-- Status + Datas -->
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <span class="section-label">Status</span>
+          <select id="edit-status" class="w-full p-3 rounded-xl">
+            <option value="Aguardando">⏳ Aguardando</option>
+            <option value="Pronto">✅ Pronto</option>
+            <option value="Entregue">📦 Entregue</option>
+            <option value="Cancelado">❌ Cancelado</option>
+          </select>
         </div>
+        <div>
+          <span class="section-label">Entrada</span>
+          <input type="date" id="edit-data" class="w-full p-3 rounded-xl">
+        </div>
+        <div>
+          <span class="section-label" style="color:#f59e0b">Previsão</span>
+          <input type="date" id="edit-data_prevista" class="w-full p-3 rounded-xl">
+        </div>
+      </div>
+
+      <!-- Cliente -->
+      <div class="border-t border-zinc-800 pt-4">
+        <p class="section-label text-zinc-600 mb-3">Cliente</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="md:col-span-2">
+            <span class="section-label">Nome</span>
+            <input type="text" id="edit-nome" placeholder="Nome Completo" class="w-full p-3 rounded-xl">
+          </div>
+          <div>
+            <span class="section-label">CPF / CNPJ</span>
+            <input type="text" id="edit-cpf" placeholder="CPF / CNPJ" class="w-full p-3 rounded-xl">
+          </div>
+          <div>
+            <span class="section-label">E-mail</span>
+            <input type="email" id="edit-email" placeholder="E-mail" class="w-full p-3 rounded-xl">
+          </div>
+          <div>
+            <span class="section-label">Celular 1</span>
+            <input type="text" id="edit-telefone" oninput="maskTel(this)" placeholder="(00) 00000-0000" class="w-full p-3 rounded-xl font-bold text-green-400">
+          </div>
+          <div>
+            <span class="section-label">Celular 2</span>
+            <input type="text" id="edit-telefone2" oninput="maskTel(this)" placeholder="(00) 00000-0000" class="w-full p-3 rounded-xl">
+          </div>
+        </div>
+      </div>
+
+      <!-- Endereço -->
+      <div class="space-y-3 p-4 bg-zinc-900/30 rounded-2xl border border-zinc-800">
+        <p class="section-label text-zinc-600">Endereço</p>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <span class="section-label">CEP</span>
+            <input type="text" id="edit-cep" placeholder="CEP" class="w-full p-3 rounded-xl">
+          </div>
+          <div class="col-span-2">
+            <span class="section-label">Endereço</span>
+            <input type="text" id="edit-endereco" placeholder="Rua" class="w-full p-3 rounded-xl">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <span class="section-label">Bairro</span>
+            <input type="text" id="edit-bairro" placeholder="Bairro" class="w-full p-3 rounded-xl">
+          </div>
+          <div>
+            <span class="section-label">Município</span>
+            <input type="text" id="edit-municipio" placeholder="Cidade - UF" class="w-full p-3 rounded-xl">
+          </div>
+        </div>
+      </div>
+
+      <!-- Serviço -->
+      <div class="border-t border-zinc-800 pt-4 space-y-3">
+        <p class="section-label text-zinc-600">Serviço</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <span class="section-label">Aparelho</span>
+            <input type="text" id="edit-aparelho" placeholder="Modelo" class="w-full p-3 rounded-xl">
+          </div>
+          <div>
+            <span class="section-label">Senha</span>
+            <input type="text" id="edit-senha" placeholder="Senha" class="w-full p-3 rounded-xl">
+          </div>
+        </div>
+        <div>
+          <span class="section-label">Defeito Relatado</span>
+          <textarea id="edit-problema" placeholder="Descreva o defeito..." class="w-full p-3 rounded-xl h-20"></textarea>
+        </div>
+        <div>
+          <span class="section-label">Checklist</span>
+          <input type="text" id="edit-checklist" placeholder="Tela OK, Touch OK..." class="w-full p-3 rounded-xl">
+        </div>
+        <div>
+          <span class="section-label">Valor</span>
+          <input type="text" id="edit-valor" oninput="maskMoney(this)" placeholder="R$ 0,00" class="w-full p-3 rounded-xl text-xl font-black text-center">
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="fecharModal()" class="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-400 hover:border-zinc-500 font-bold text-sm transition-colors">Cancelar</button>
+        <button type="submit" class="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-black text-sm transition-colors flex items-center justify-center gap-2">
+          <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Página -->
+<div class="max-w-2xl mx-auto">
+
+  <!-- Header -->
+  <div class="glass-card rounded-2xl p-5 mb-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-green-500/20 p-3 rounded-xl"><i data-lucide="clipboard-list" class="text-green-500 w-5 h-5"></i></div>
+      <div>
+        <h1 class="text-xl font-black tracking-tight text-white">BRCELL <span class="text-green-500">Log</span></h1>
+        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Ordens de Serviço</p>
+      </div>
     </div>
-
-    <!-- Página principal -->
-    <div class="max-w-2xl mx-auto">
-
-        <!-- Header -->
-        <div class="glass-card rounded-2xl p-5 mb-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-green-500/20 p-3 rounded-xl">
-                    <i data-lucide="clipboard-list" class="text-green-500 w-5 h-5"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-black tracking-tight text-white">BRCELL <span class="text-green-500">Log</span></h1>
-                    <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Ordens de Serviço</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <span id="total-badge" class="text-[10px] font-black bg-zinc-800 text-zinc-400 px-3 py-1.5 rounded-full">0 OS</span>
-                <button onclick="carregarOS()" class="p-2.5 rounded-xl border border-zinc-800 hover:border-green-500/50 hover:text-green-500 transition-colors" title="Recarregar">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                </button>
-                <a href="index.html" class="p-2.5 rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors" title="Nova OS">
-                    <i data-lucide="plus" class="w-4 h-4 text-zinc-400"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- Filtros -->
-        <div class="glass-card rounded-2xl p-4 mb-4 space-y-3">
-            <div class="relative">
-                <i data-lucide="search" class="absolute left-3 top-3.5 w-4 h-4 text-zinc-500"></i>
-                <input type="text" id="filtro-busca" oninput="aplicarFiltros()" placeholder="Buscar por nome ou CPF..." class="filter-input pl-10">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <span class="section-label">Filtrar por data</span>
-                    <input type="date" id="filtro-data" onchange="aplicarFiltros()" class="filter-input">
-                </div>
-                <div>
-                    <span class="section-label">Filtrar por status</span>
-                    <select id="filtro-status" onchange="aplicarFiltros()" class="filter-input">
-                        <option value="">Todos os status</option>
-                        <option value="Aguardando">⏳ Aguardando</option>
-                        <option value="Pronto">✅ Pronto</option>
-                        <option value="Entregue">📦 Entregue</option>
-                        <option value="Cancelado">❌ Cancelado</option>
-                    </select>
-                </div>
-            </div>
-            <button onclick="limparFiltros()" class="text-[10px] font-bold text-zinc-500 hover:text-zinc-300 uppercase tracking-widest transition-colors">
-                Limpar filtros
-            </button>
-        </div>
-
-        <!-- Lista de OS -->
-        <div id="lista-os" class="space-y-2">
-            <!-- Preenchido via JS -->
-        </div>
-
+    <div class="flex items-center gap-2">
+      <span id="total-badge" class="text-[10px] font-black bg-zinc-800 text-zinc-400 px-3 py-1.5 rounded-full">— OS</span>
+      <button onclick="carregarOS()" class="p-2.5 rounded-xl border border-zinc-800 hover:border-green-500/50 hover:text-green-500 transition-colors" title="Recarregar">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+      </button>
+      <a href="index.html" class="p-2.5 rounded-xl border border-zinc-800 hover:border-zinc-600 transition-colors" title="Nova OS">
+        <i data-lucide="plus" class="w-4 h-4 text-zinc-400"></i>
+      </a>
     </div>
+  </div>
 
-    <script>
-        // ─────────────────────────────────────────────
-        // CONFIGURAÇÃO — altere apenas esta URL
-        // ─────────────────────────────────────────────
-        const URL_SERVICO = "https://script.google.com/macros/s/AKfycbw7aF7vPnHfXfmNK37a1Q_Cjk8pUpzMJrKOBVL4j4tna8vqn3ocmFU4v7jP7jIaDwvL/exec";
+  <!-- Filtros -->
+  <div class="glass-card rounded-2xl p-4 mb-4 space-y-3">
+    <div class="relative">
+      <i data-lucide="search" class="absolute left-3 top-3.5 w-4 h-4 text-zinc-500 pointer-events-none"></i>
+      <input type="text" id="filtro-busca" oninput="aplicarFiltros()" placeholder="Buscar por nome ou CPF..." class="filter-input pl-10">
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <span class="section-label">Data de entrada</span>
+        <input type="date" id="filtro-data" onchange="aplicarFiltros()" class="filter-input">
+      </div>
+      <div>
+        <span class="section-label">Status</span>
+        <select id="filtro-status" onchange="aplicarFiltros()" class="filter-input">
+          <option value="">Todos</option>
+          <option value="Aguardando">⏳ Aguardando</option>
+          <option value="Pronto">✅ Pronto</option>
+          <option value="Entregue">📦 Entregue</option>
+          <option value="Cancelado">❌ Cancelado</option>
+        </select>
+      </div>
+    </div>
+    <button onclick="limparFiltros()" class="text-[10px] font-bold text-zinc-600 hover:text-zinc-300 uppercase tracking-widest transition-colors">
+      Limpar filtros
+    </button>
+  </div>
 
-        // ─────────────────────────────────────────────
-        // Estado
-        // ─────────────────────────────────────────────
-        let todasOS = [];
-        let filtradas = [];
+  <!-- Lista -->
+  <div id="lista-os" class="space-y-2"></div>
 
-        const loading = document.getElementById('loadingOverlay');
-        const loadingStatus = document.getElementById('loadingStatus');
+</div>
 
-        // ─────────────────────────────────────────────
-        // Init
-        // ─────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            carregarOS();
-        });
+<script>
+  // ─── CONFIG ───────────────────────────────────────────
+  const URL_SERVICO = "https://script.google.com/macros/s/AKfycbw7aF7vPnHfXfmNK37a1Q_Cjk8pUpzMJrKOBVL4j4tna8vqn3ocmFU4v7jP7jIaDwvL/exec";
 
-        // ─────────────────────────────────────────────
-        // Carregar OS do Google Sheets
-        // ─────────────────────────────────────────────
-        async function carregarOS() {
-            loading.style.display = 'flex';
-            loadingStatus.innerText = 'Carregando OS...';
-            try {
-                const res = await fetch(URL_SERVICO, {
-                    method: 'POST',
-                    body: JSON.stringify({ acao: 'listar' })
-                });
-                const data = await res.json();
-                todasOS = data.os || [];
-                aplicarFiltros();
-            } catch (e) {
-                console.error(e);
-                mostrarEmptyState('Erro ao conectar. Verifique sua conexão.');
-            }
-            loading.style.display = 'none';
-            lucide.createIcons();
+  // Mapeamento exato dos cabeçalhos da planilha
+  // Coluna A=0 B=1 C=2 D=3 E=4 F=5 G=6 H=7 I=8 J=9 K=10 L=11 M=12 N=13 O=14 P=15 Q=16 R=17 S=18 T=19 U=20
+  // ID  Data  Data_Prevista  Nome  Telefone  Telefone_2  Email  CPF  CEP  Endereço  Bairro  Municipio  Aparelho  Senha  Problema  Valor  Checklist  FotoFrente  FotoVerso  Assinatura  Documento
+
+  let todasOS = [];
+  const loading = document.getElementById('loadingOverlay');
+  const loadingStatus = document.getElementById('loadingStatus');
+
+  document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); carregarOS(); });
+
+  // ─── CARREGAR ─────────────────────────────────────────
+  async function carregarOS() {
+    loading.style.display = 'flex';
+    loadingStatus.innerText = 'Carregando OS...';
+    try {
+      const res = await fetch(URL_SERVICO, {
+        method: 'POST',
+        body: JSON.stringify({ acao: 'listar' })
+      });
+      const data = await res.json();
+      todasOS = data.os || [];
+      aplicarFiltros();
+    } catch(e) {
+      console.error(e);
+      mostrarEmpty('Erro ao conectar. Verifique sua conexão.');
+    }
+    loading.style.display = 'none';
+    lucide.createIcons();
+  }
+
+  // ─── FILTROS ──────────────────────────────────────────
+  function aplicarFiltros() {
+    const busca  = document.getElementById('filtro-busca').value.toLowerCase().trim();
+    const data   = document.getElementById('filtro-data').value;
+    const status = document.getElementById('filtro-status').value;
+
+    const filtradas = todasOS.filter(os => {
+      const matchBusca  = !busca  || (os.Nome||'').toLowerCase().includes(busca) || (os.CPF||'').replace(/\D/g,'').includes(busca.replace(/\D/g,''));
+      const matchStatus = !status || (os.status||'Aguardando') === status;
+      let matchData = true;
+      if (data && os.Data) {
+        // Data na planilha está como DD/MM/AAAA — converte para comparar
+        const partes = os.Data.split('/');
+        if (partes.length === 3) {
+          const dataOS = `${partes[2]}-${partes[1]}-${partes[0]}`;
+          matchData = dataOS === data;
         }
+      }
+      return matchBusca && matchData && matchStatus;
+    });
 
-        // ─────────────────────────────────────────────
-        // Filtros
-        // ─────────────────────────────────────────────
-        function aplicarFiltros() {
-            const busca  = document.getElementById('filtro-busca').value.toLowerCase().trim();
-            const data   = document.getElementById('filtro-data').value;
-            const status = document.getElementById('filtro-status').value;
+    renderizar(filtradas);
+  }
 
-            filtradas = todasOS.filter(os => {
-                const matchBusca  = !busca  || (os.nome||'').toLowerCase().includes(busca) || (os.doc||'').includes(busca);
-                const matchData   = !data   || (os.data_entrada||'').startsWith(data);
-                const matchStatus = !status || (os.status||'Aguardando') === status;
-                return matchBusca && matchData && matchStatus;
-            });
+  function limparFiltros() {
+    document.getElementById('filtro-busca').value = '';
+    document.getElementById('filtro-data').value = '';
+    document.getElementById('filtro-status').value = '';
+    aplicarFiltros();
+  }
 
-            renderizarLista();
-        }
+  // ─── RENDERIZAR ───────────────────────────────────────
+  function renderizar(lista) {
+    const container = document.getElementById('lista-os');
+    document.getElementById('total-badge').textContent = `${lista.length} OS`;
 
-        function limparFiltros() {
-            document.getElementById('filtro-busca').value = '';
-            document.getElementById('filtro-data').value = '';
-            document.getElementById('filtro-status').value = '';
-            aplicarFiltros();
-        }
+    if (!lista.length) {
+      mostrarEmpty('Nenhuma OS encontrada. Ajuste os filtros.');
+      return;
+    }
 
-        // ─────────────────────────────────────────────
-        // Renderizar lista
-        // ─────────────────────────────────────────────
-        function renderizarLista() {
-            const container = document.getElementById('lista-os');
-            const badge = document.getElementById('total-badge');
+    container.innerHTML = lista.map(os => {
+      const status = os.status || 'Aguardando';
+      const statusKey = status.toLowerCase();
+      const badgeMap = {
+        aguardando: 'badge-aguardando',
+        pronto:     'badge-pronto',
+        entregue:   'badge-entregue',
+        cancelado:  'badge-cancelado'
+      };
+      const badgeClass = badgeMap[statusKey] || 'badge-aguardando';
 
-            badge.textContent = `${filtradas.length} OS`;
+      return `
+      <div class="os-card status-${statusKey}" onclick='abrirModal(${JSON.stringify(os).replace(/'/g,"&#39;")})'>
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] font-black text-green-500 tracking-widest">OS #${os.ID||'—'}</span>
+              <span class="badge ${badgeClass}">${status}</span>
+            </div>
+            <p class="font-bold text-white text-sm truncate">${os.Nome||'—'}</p>
+            <p class="text-xs text-zinc-500 truncate mt-0.5">${os.Aparelho||'Aparelho não informado'}</p>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-xs font-black text-white">${os.Valor||'—'}</p>
+            <p class="text-[10px] text-zinc-600 mt-0.5">${os.Data||'—'}</p>
+          </div>
+        </div>
+        ${os.Problema ? `<p class="text-[11px] text-zinc-600 mt-2 line-clamp-1 border-t border-zinc-800 pt-2">${os.Problema}</p>` : ''}
+      </div>`;
+    }).join('');
 
-            if (filtradas.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state glass-card rounded-2xl">
-                        <i data-lucide="inbox" class="w-12 h-12 text-zinc-600 mx-auto mb-4"></i>
-                        <p class="text-zinc-500 font-bold text-sm">Nenhuma OS encontrada</p>
-                        <p class="text-zinc-700 text-xs mt-1">Tente ajustar os filtros</p>
-                    </div>`;
-                lucide.createIcons();
-                return;
-            }
+    lucide.createIcons();
+  }
 
-            // Ordenar por ID decrescente (mais recente primeiro)
-            const ordenadas = [...filtradas].sort((a, b) => {
-                const idA = parseInt((a.id||'0').toString().replace(/\D/g,'')) || 0;
-                const idB = parseInt((b.id||'0').toString().replace(/\D/g,'')) || 0;
-                return idB - idA;
-            });
+  function mostrarEmpty(msg) {
+    document.getElementById('lista-os').innerHTML = `
+      <div class="text-center py-16 glass-card rounded-2xl">
+        <i data-lucide="inbox" class="w-12 h-12 text-zinc-700 mx-auto mb-3"></i>
+        <p class="text-zinc-500 font-bold text-sm">${msg}</p>
+      </div>`;
+    lucide.createIcons();
+  }
 
-            container.innerHTML = ordenadas.map(os => {
-                const status = os.status || 'Aguardando';
-                const statusKey = status.toLowerCase();
-                const badgeClass = {
-                    aguardando: 'badge-aguardando',
-                    pronto:     'badge-pronto',
-                    entregue:   'badge-entregue',
-                    cancelado:  'badge-cancelado'
-                }[statusKey] || 'badge-aguardando';
+  // ─── MODAL ────────────────────────────────────────────
+  function abrirModal(os) {
+    document.getElementById('modal-id').textContent     = `#${os.ID||'—'}`;
+    document.getElementById('edit-id').value            = os.ID || '';
+    document.getElementById('edit-data').value          = converterData(os.Data);
+    document.getElementById('edit-data_prevista').value = converterData(os.Data_Prevista);
+    document.getElementById('edit-status').value        = os.status || 'Aguardando';
+    document.getElementById('edit-nome').value          = os.Nome || '';
+    document.getElementById('edit-cpf').value           = os.CPF || '';
+    document.getElementById('edit-email').value         = os.Email || '';
+    document.getElementById('edit-telefone').value      = os.Telefone || '';
+    document.getElementById('edit-telefone2').value     = os.Telefone_2 || '';
+    document.getElementById('edit-cep').value           = os.CEP || '';
+    document.getElementById('edit-endereco').value      = os['Endereço'] || '';
+    document.getElementById('edit-bairro').value        = os.Bairro || '';
+    document.getElementById('edit-municipio').value     = os.Municipio || '';
+    document.getElementById('edit-aparelho').value      = os.Aparelho || '';
+    document.getElementById('edit-senha').value         = os.Senha || '';
+    document.getElementById('edit-problema').value      = os.Problema || '';
+    document.getElementById('edit-checklist').value     = os.Checklist || '';
+    document.getElementById('edit-valor').value         = os.Valor || '';
 
-                const dataFmt = os.data_entrada
-                    ? new Date(os.data_entrada + 'T12:00:00').toLocaleDateString('pt-BR')
-                    : '—';
+    document.getElementById('modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+  }
 
-                const valorFmt = os.valor
-                    ? os.valor
-                    : '—';
+  // DD/MM/AAAA → AAAA-MM-DD para input date
+  function converterData(d) {
+    if (!d) return '';
+    const p = d.split('/');
+    if (p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+    return d; // já no formato ISO
+  }
 
-                return `
-                <div class="os-card status-${statusKey}" onclick='abrirModal(${JSON.stringify(os)})'>
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[10px] font-black text-green-500 tracking-widest">OS #${os.id||'—'}</span>
-                                <span class="badge ${badgeClass}">${status}</span>
-                            </div>
-                            <p class="font-bold text-white text-sm truncate">${os.nome||'—'}</p>
-                            <p class="text-xs text-zinc-500 truncate mt-0.5">${os.aparelho||'Aparelho não informado'}</p>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <p class="text-xs font-black text-white">${valorFmt}</p>
-                            <p class="text-[10px] text-zinc-600 mt-0.5">${dataFmt}</p>
-                        </div>
-                    </div>
-                    ${os.problema ? `<p class="text-[11px] text-zinc-600 mt-2 line-clamp-1 border-t border-zinc-800 pt-2">${os.problema}</p>` : ''}
-                </div>`;
-            }).join('');
+  function fecharModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('modal').addEventListener('click', e => { if(e.target === document.getElementById('modal')) fecharModal(); });
 
-            lucide.createIcons();
-        }
+  // ─── SALVAR EDIÇÃO ────────────────────────────────────
+  async function salvarEdicao(e) {
+    e.preventDefault();
+    loading.style.display = 'flex';
+    loadingStatus.innerText = 'Salvando alterações...';
 
-        function mostrarEmptyState(msg) {
-            document.getElementById('lista-os').innerHTML = `
-                <div class="empty-state glass-card rounded-2xl">
-                    <i data-lucide="wifi-off" class="w-12 h-12 text-zinc-600 mx-auto mb-4"></i>
-                    <p class="text-zinc-500 font-bold text-sm">${msg}</p>
-                </div>`;
-            lucide.createIcons();
-        }
+    const payload = {
+      acao:          'editar',
+      ID:            document.getElementById('edit-id').value,
+      Data:          formatarDataBR(document.getElementById('edit-data').value),
+      Data_Prevista: formatarDataBR(document.getElementById('edit-data_prevista').value),
+      status:        document.getElementById('edit-status').value,
+      Nome:          document.getElementById('edit-nome').value,
+      CPF:           document.getElementById('edit-cpf').value,
+      Email:         document.getElementById('edit-email').value,
+      Telefone:      document.getElementById('edit-telefone').value,
+      Telefone_2:    document.getElementById('edit-telefone2').value,
+      CEP:           document.getElementById('edit-cep').value,
+      Endereço:      document.getElementById('edit-endereco').value,
+      Bairro:        document.getElementById('edit-bairro').value,
+      Municipio:     document.getElementById('edit-municipio').value,
+      Aparelho:      document.getElementById('edit-aparelho').value,
+      Senha:         document.getElementById('edit-senha').value,
+      Problema:      document.getElementById('edit-problema').value,
+      Checklist:     document.getElementById('edit-checklist').value,
+      Valor:         document.getElementById('edit-valor').value
+    };
 
-        // ─────────────────────────────────────────────
-        // Modal
-        // ─────────────────────────────────────────────
-        function abrirModal(os) {
-            document.getElementById('modal-id').textContent = `#${os.id||'—'}`;
-            document.getElementById('edit-id').value           = os.id || '';
-            document.getElementById('edit-data_entrada').value = os.data_entrada || '';
-            document.getElementById('edit-data_previsao').value= os.data_previsao || '';
-            document.getElementById('edit-status').value       = os.status || 'Aguardando';
-            document.getElementById('edit-nome').value         = os.nome || '';
-            document.getElementById('edit-doc').value          = os.doc || '';
-            document.getElementById('edit-email').value        = os.email || '';
-            document.getElementById('edit-cel1').value         = os.cel1 || '';
-            document.getElementById('edit-cel2').value         = os.cel2 || '';
-            document.getElementById('edit-cep').value          = os.cep || '';
-            document.getElementById('edit-end').value          = os.end || '';
-            document.getElementById('edit-num').value          = os.num || '';
-            document.getElementById('edit-comp').value         = os.comp || '';
-            document.getElementById('edit-bairro').value       = os.bairro || '';
-            document.getElementById('edit-cidade_uf').value    = os.cid_uf || '';
-            document.getElementById('edit-aparelho').value     = os.aparelho || '';
-            document.getElementById('edit-senha').value        = os.senha || '';
-            document.getElementById('edit-problema').value     = os.problema || '';
-            document.getElementById('edit-checklist').value    = os.checklist || '';
-            document.getElementById('edit-valor').value        = os.valor || '';
+    try {
+      const res = await fetch(URL_SERVICO, { method: 'POST', body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.status === 'sucesso') {
+        fecharModal();
+        toast('OS #' + payload.ID + ' atualizada!', 'success');
+        await carregarOS();
+      } else {
+        toast('Erro: ' + (data.msg || 'Tente novamente.'), 'error');
+      }
+    } catch(err) {
+      toast('Erro de conexão.', 'error');
+    }
+    loading.style.display = 'none';
+  }
 
-            document.getElementById('modal').classList.add('open');
-            document.body.style.overflow = 'hidden';
-            lucide.createIcons();
-        }
+  // AAAA-MM-DD → DD/MM/AAAA
+  function formatarDataBR(d) {
+    if (!d) return '';
+    const p = d.split('-');
+    if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+    return d;
+  }
 
-        function fecharModal() {
-            document.getElementById('modal').classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        // Fechar clicando fora
-        document.getElementById('modal').addEventListener('click', function(e) {
-            if (e.target === this) fecharModal();
-        });
-
-        // ─────────────────────────────────────────────
-        // Salvar edição
-        // ─────────────────────────────────────────────
-        async function salvarEdicao(e) {
-            e.preventDefault();
-            loading.style.display = 'flex';
-            loadingStatus.innerText = 'Salvando alterações...';
-
-            const payload = {
-                acao:         'editar',
-                id:           document.getElementById('edit-id').value,
-                data_entrada: document.getElementById('edit-data_entrada').value,
-                data_previsao:document.getElementById('edit-data_previsao').value,
-                status:       document.getElementById('edit-status').value,
-                nome:         document.getElementById('edit-nome').value,
-                doc:          document.getElementById('edit-doc').value,
-                email:        document.getElementById('edit-email').value,
-                cel1:         document.getElementById('edit-cel1').value,
-                cel2:         document.getElementById('edit-cel2').value,
-                cep:          document.getElementById('edit-cep').value,
-                end:          document.getElementById('edit-end').value,
-                num:          document.getElementById('edit-num').value,
-                comp:         document.getElementById('edit-comp').value,
-                bairro:       document.getElementById('edit-bairro').value,
-                cid_uf:       document.getElementById('edit-cidade_uf').value,
-                aparelho:     document.getElementById('edit-aparelho').value,
-                senha:        document.getElementById('edit-senha').value,
-                problema:     document.getElementById('edit-problema').value,
-                checklist:    document.getElementById('edit-checklist').value,
-                valor:        document.getElementById('edit-valor').value
-            };
-
-            try {
-                const res = await fetch(URL_SERVICO, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-
-                if (data.status === 'sucesso') {
-                    fecharModal();
-                    toast('OS #' + payload.id + ' atualizada!', 'success');
-                    await carregarOS();
-                } else {
-                    toast('Erro: ' + (data.msg || 'Tente novamente.'), 'error');
-                }
-            } catch (err) {
-                console.error(err);
-                toast('Erro de conexão.', 'error');
-            }
-
-            loading.style.display = 'none';
-        }
-
-        // ─────────────────────────────────────────────
-        // Utilitários
-        // ─────────────────────────────────────────────
-        function maskTel(v) {
-            v.value = v.value.replace(/\D/g,'').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2').substring(0,15);
-        }
-
-        function maskMoney(v) {
-            let val = v.value.replace(/\D/g,'');
-            val = (val / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            v.value = val;
-        }
-
-        function toast(msg, tipo = 'success') {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.className = `show ${tipo}`;
-            setTimeout(() => { el.className = tipo; }, 3000);
-        }
-    </script>
+  // ─── UTILS ────────────────────────────────────────────
+  function maskTel(v) { v.value = v.value.replace(/\D/g,'').replace(/^(\d{2})(\d)/g,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2').substring(0,15); }
+  function maskMoney(v) { let val = v.value.replace(/\D/g,''); val = (val/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); v.value = val; }
+  function toast(msg, tipo='success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.className = `show ${tipo}`;
+    setTimeout(() => { el.className = tipo; }, 3000);
+  }
+</script>
 </body>
 </html>
