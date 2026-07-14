@@ -226,7 +226,7 @@
 // ============================================================
 // CONFIGURAÇÃO — cole aqui a URL do seu Apps Script (/exec)
 // ============================================================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw1emWvzzpVVoOOC_jrol_W2ehviyAh5zXNUyRssAMfaejuHAkTVMozigk85OTyy7EM_g/exec";
+const GAS_URL = "COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT";
 
 const $ = (id) => document.getElementById(id);
 const fields = ['nome','doc','celular','cep','estado','cidade','bairro','numero','complemento'];
@@ -354,14 +354,24 @@ async function buscarEstoque(termo){
     const resp = await fetch(urlWithParams(GAS_URL, { action:'buscarEstoque', termo }));
     const data = await resp.json();
     const items = data.items || [];
+
+    let avisoHtml = '';
+    if (data.aviso) {
+      avisoHtml = `<div class="sugg-empty" style="color:var(--stamp);">⚠️ ${escapeHtml(data.aviso)}</div>`;
+    }
+
     if (!items.length) {
-      box.innerHTML = '<div class="sugg-empty">Nenhum produto disponível encontrado.</div>';
+      box.innerHTML = avisoHtml + '<div class="sugg-empty">Nenhum produto disponível encontrado.</div>';
     } else {
-      box.innerHTML = items.map(it => `
-        <div class="sugg-row" data-codigo="${escapeHtml(it.codigo)}" data-nome="${escapeHtml(it.nomeReferencia)}" data-valor="${it.valorUnitario}" data-custo="${it.custoUnitario}">
-          <span>${escapeHtml(it.nomeReferencia)}<br><span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);">${escapeHtml(it.codigo)}</span></span>
+      box.innerHTML = avisoHtml + items.map((it, idx) => {
+        const temCodigo = it.codigo && String(it.codigo).trim() !== '';
+        const codigoLabel = temCodigo ? escapeHtml(it.codigo) : '⚠️ sem código/IMEI identificado';
+        return `
+        <div class="sugg-row" data-key="${idx}-${Date.now()}" data-codigo="${temCodigo ? escapeHtml(it.codigo) : ''}" data-nome="${escapeHtml(it.nomeReferencia)}" data-valor="${it.valorUnitario}" data-custo="${it.custoUnitario}">
+          <span>${escapeHtml(it.nomeReferencia)}<br><span style="font-family:var(--mono);font-size:10.5px;color:${temCodigo ? 'var(--ink-soft)' : 'var(--stamp)'};">${codigoLabel}</span></span>
           <span class="price">${fmtMoeda(it.valorUnitario)}</span>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
     box.classList.add('open');
   } catch (err) {
@@ -372,8 +382,8 @@ async function buscarEstoque(termo){
 
 $('suggestions').addEventListener('click', (e) => {
   const row = e.target.closest('.sugg-row');
-  if (!row || !row.dataset.codigo) return;
-  addToCart(row.dataset.codigo, row.dataset.nome, Number(row.dataset.valor) || 0, Number(row.dataset.custo) || 0);
+  if (!row || !row.dataset.key) return;
+  addToCart(row.dataset.key, row.dataset.codigo, row.dataset.nome, Number(row.dataset.valor) || 0, Number(row.dataset.custo) || 0);
   $('produtoSearch').value = '';
   $('suggestions').classList.remove('open');
 });
@@ -382,11 +392,13 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.item-search')) $('suggestions').classList.remove('open');
 });
 
-function addToCart(codigo, nomeReferencia, valorUnitario, custoUnitario){
-  // cada CODIGO/IMEI é uma unidade física única — não soma quantidade de códigos diferentes
-  const existing = cart.find(i => i.codigo === codigo);
-  if (existing) { return; } // já está no carrinho, não duplica a mesma unidade
-  cart.push({ codigo, nomeReferencia, valorUnitario, custoUnitario, quantidade: 1 });
+function addToCart(key, codigo, nomeReferencia, valorUnitario, custoUnitario){
+  // usamos a "key" (única por clique) para controlar duplicidade no carrinho —
+  // assim, mesmo que o código do estoque venha vazio para 2 produtos diferentes,
+  // o segundo item ainda pode ser adicionado normalmente.
+  const existing = cart.find(i => i.key === key);
+  if (existing) { return; }
+  cart.push({ key, codigo: codigo || '', nomeReferencia, valorUnitario, custoUnitario, quantidade: 1 });
   renderCart();
 }
 
@@ -408,7 +420,7 @@ function renderCart(){
   body.innerHTML = cart.map((item, idx) => `
     <tr>
       <td>${escapeHtml(item.nomeReferencia)}</td>
-      <td style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);">${escapeHtml(item.codigo)}</td>
+      <td style="font-family:var(--mono);font-size:11.5px;color:${item.codigo ? 'var(--ink-soft)' : 'var(--stamp)'};">${item.codigo ? escapeHtml(item.codigo) : '⚠️ sem código'}</td>
       <td>${fmtMoeda(item.valorUnitario)}</td>
       <td><button class="rm" data-idx="${idx}">remover</button></td>
     </tr>
@@ -445,7 +457,7 @@ function updateTicket(){
     itemsBox.innerHTML = '<div class="titem" style="color:#C7C4B4;">nenhum item ainda</div>';
   } else {
     itemsBox.innerHTML = cart.map(i => `
-      <div class="titem"><span class="name">${escapeHtml(i.nomeReferencia)}</span><span class="qty">${escapeHtml(i.codigo)}</span></div>
+      <div class="titem"><span class="name">${escapeHtml(i.nomeReferencia)}</span><span class="qty">${i.codigo ? escapeHtml(i.codigo) : '⚠️ sem código'}</span></div>
     `).join('');
   }
   const subtotal = cart.reduce((s,i) => s + i.valorUnitario * i.quantidade, 0);
