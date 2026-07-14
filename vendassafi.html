@@ -167,7 +167,7 @@
 
     <table class="cart">
       <thead>
-        <tr><th>Produto</th><th>Qtd</th><th>Valor unit.</th><th>Total</th><th></th></tr>
+        <tr><th>Produto</th><th>Código/IMEI</th><th>Valor</th><th></th></tr>
       </thead>
       <tbody id="cartBody"></tbody>
     </table>
@@ -211,7 +211,7 @@
 // ============================================================
 // CONFIGURAÇÃO — cole aqui a URL do seu Apps Script (/exec)
 // ============================================================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw1emWvzzpVVoOOC_jrol_W2ehviyAh5zXNUyRssAMfaejuHAkTVMozigk85OTyy7EM_g/exec";
+const GAS_URL = "COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT";
 
 const $ = (id) => document.getElementById(id);
 const fields = ['nome','doc','celular','cep','estado','cidade','bairro','numero','complemento'];
@@ -343,8 +343,8 @@ async function buscarEstoque(termo){
       box.innerHTML = '<div class="sugg-empty">Nenhum produto disponível encontrado.</div>';
     } else {
       box.innerHTML = items.map(it => `
-        <div class="sugg-row" data-nome="${escapeHtml(it.nomeReferencia)}" data-valor="${it.valorUnitario}">
-          <span>${escapeHtml(it.nomeReferencia)}</span>
+        <div class="sugg-row" data-codigo="${escapeHtml(it.codigo)}" data-nome="${escapeHtml(it.nomeReferencia)}" data-valor="${it.valorUnitario}" data-custo="${it.custoUnitario}">
+          <span>${escapeHtml(it.nomeReferencia)}<br><span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);">${escapeHtml(it.codigo)}</span></span>
           <span class="price">${fmtMoeda(it.valorUnitario)}</span>
         </div>`).join('');
     }
@@ -357,8 +357,8 @@ async function buscarEstoque(termo){
 
 $('suggestions').addEventListener('click', (e) => {
   const row = e.target.closest('.sugg-row');
-  if (!row || !row.dataset.nome) return;
-  addToCart(row.dataset.nome, Number(row.dataset.valor) || 0);
+  if (!row || !row.dataset.codigo) return;
+  addToCart(row.dataset.codigo, row.dataset.nome, Number(row.dataset.valor) || 0, Number(row.dataset.custo) || 0);
   $('produtoSearch').value = '';
   $('suggestions').classList.remove('open');
 });
@@ -367,10 +367,11 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.item-search')) $('suggestions').classList.remove('open');
 });
 
-function addToCart(nomeReferencia, valorUnitario){
-  const existing = cart.find(i => i.nomeReferencia === nomeReferencia);
-  if (existing) { existing.quantidade += 1; }
-  else { cart.push({ nomeReferencia, valorUnitario, quantidade: 1 }); }
+function addToCart(codigo, nomeReferencia, valorUnitario, custoUnitario){
+  // cada CODIGO/IMEI é uma unidade física única — não soma quantidade de códigos diferentes
+  const existing = cart.find(i => i.codigo === codigo);
+  if (existing) { return; } // já está no carrinho, não duplica a mesma unidade
+  cart.push({ codigo, nomeReferencia, valorUnitario, custoUnitario, quantidade: 1 });
   renderCart();
 }
 
@@ -392,20 +393,12 @@ function renderCart(){
   body.innerHTML = cart.map((item, idx) => `
     <tr>
       <td>${escapeHtml(item.nomeReferencia)}</td>
-      <td><input type="number" min="1" class="qtd" value="${item.quantidade}" data-idx="${idx}"></td>
+      <td style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);">${escapeHtml(item.codigo)}</td>
       <td>${fmtMoeda(item.valorUnitario)}</td>
-      <td>${fmtMoeda(item.valorUnitario * item.quantidade)}</td>
       <td><button class="rm" data-idx="${idx}">remover</button></td>
     </tr>
   `).join('');
 
-  body.querySelectorAll('.qtd').forEach(inp => {
-    inp.addEventListener('input', (e) => {
-      const idx = Number(e.target.dataset.idx);
-      cart[idx].quantidade = Math.max(1, Number(e.target.value) || 1);
-      renderCart();
-    });
-  });
   body.querySelectorAll('.rm').forEach(btn => {
     btn.addEventListener('click', (e) => {
       cart.splice(Number(e.target.dataset.idx), 1);
@@ -432,7 +425,7 @@ function updateTicket(){
     itemsBox.innerHTML = '<div class="titem" style="color:#C7C4B4;">nenhum item ainda</div>';
   } else {
     itemsBox.innerHTML = cart.map(i => `
-      <div class="titem"><span class="name">${escapeHtml(i.nomeReferencia)}</span><span class="qty">${i.quantidade}x</span></div>
+      <div class="titem"><span class="name">${escapeHtml(i.nomeReferencia)}</span><span class="qty">${escapeHtml(i.codigo)}</span></div>
     `).join('');
   }
   const total = cart.reduce((s,i) => s + i.valorUnitario * i.quantidade, 0);
@@ -466,7 +459,7 @@ $('btnSalvar').addEventListener('click', async () => {
       numero: inputs.numero.value.trim(),
       complemento: inputs.complemento.value.trim()
     },
-    itens: cart.map(i => ({ nomeReferencia: i.nomeReferencia, quantidade: i.quantidade, valorUnitario: i.valorUnitario }))
+    itens: cart.map(i => ({ codigo: i.codigo, nomeReferencia: i.nomeReferencia, quantidade: i.quantidade, valorUnitario: i.valorUnitario, custoUnitario: i.custoUnitario }))
   };
 
   $('btnSalvar').disabled = true; $('btnSalvar').textContent = 'Salvando...';
