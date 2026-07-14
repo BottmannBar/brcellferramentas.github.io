@@ -238,6 +238,7 @@ let clienteEncontrado = false;
 function urlWithParams(base, params){
   const u = new URL(base);
   Object.keys(params).forEach(k => u.searchParams.set(k, params[k]));
+  u.searchParams.set('_ts', Date.now()); // quebra-cache: garante que o Apps Script sempre responda com dado fresco
   return u.toString();
 }
 
@@ -265,7 +266,7 @@ async function buscarCliente(termo){
   hint.className = 'field-hint';
 
   try {
-    const resp = await fetch(urlWithParams(GAS_URL, { action:'buscarContato', termo }));
+    const resp = await fetch(urlWithParams(GAS_URL, { action:'buscarContato', termo }), { cache: 'no-store' });
     const data = await resp.json();
 
     if (data.found) {
@@ -351,7 +352,7 @@ async function buscarEstoque(termo){
     return;
   }
   try {
-    const resp = await fetch(urlWithParams(GAS_URL, { action:'buscarEstoque', termo }));
+    const resp = await fetch(urlWithParams(GAS_URL, { action:'buscarEstoque', termo }), { cache: 'no-store' });
     const data = await resp.json();
     const items = data.items || [];
 
