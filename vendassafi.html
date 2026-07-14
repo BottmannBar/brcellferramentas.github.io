@@ -159,6 +159,18 @@
       <div class="f-4"><label for="complemento">Complemento</label><input id="complemento" placeholder="Casa, apto, bloco..."></div>
     </div>
 
+    <div class="section-title">Ajustes da nota</div>
+    <div class="grid">
+      <div class="f-3">
+        <label for="desconto">Desconto (R$)</label>
+        <input id="desconto" type="number" min="0" step="0.01" placeholder="0,00">
+      </div>
+      <div class="f-3">
+        <label for="frete">Frete (R$)</label>
+        <input id="frete" type="number" min="0" step="0.01" placeholder="0,00">
+      </div>
+    </div>
+
     <div class="section-title">Itens da venda</div>
     <div class="item-search">
       <input id="produtoSearch" placeholder="Buscar produto no estoque (ex: iphone 11)" autocomplete="off">
@@ -173,8 +185,10 @@
     </table>
     <div class="cart-empty" id="cartEmpty">Nenhum item adicionado ainda.</div>
     <div class="cart-total" id="cartTotalWrap" style="display:none;">
-      <span class="lbl">Total da venda</span>
-      <span id="cartTotal">R$ 0,00</span>
+      <div style="text-align:right;">
+        <div style="font-size:12px;color:var(--ink-soft);" id="cartSubtotalLine"></div>
+        <div><span class="lbl">Total da venda</span> <span id="cartTotal">R$ 0,00</span></div>
+      </div>
     </div>
 
     <div class="actions">
@@ -198,6 +212,7 @@
           <div class="titem" style="color:#C7C4B4;">nenhum item ainda</div>
         </div>
         <hr>
+        <div id="ticketAdjustments"></div>
         <div class="ticket-total"><span>Total</span><span id="ticketTotal">R$ 0,00</span></div>
         <div style="text-align:center;">
           <span class="stamp" id="ticketStamp">rascunho</span>
@@ -406,7 +421,12 @@ function renderCart(){
     });
   });
 
-  const total = cart.reduce((s,i) => s + i.valorUnitario * i.quantidade, 0);
+  const subtotal = cart.reduce((s,i) => s + i.valorUnitario * i.quantidade, 0);
+  const desconto = Number($('desconto').value) || 0;
+  const frete = Number($('frete').value) || 0;
+  const total = Math.max(0, subtotal - desconto + frete);
+
+  $('cartSubtotalLine').textContent = `Subtotal ${fmtMoeda(subtotal)}` + (desconto ? ` · Desconto -${fmtMoeda(desconto)}` : '') + (frete ? ` · Frete +${fmtMoeda(frete)}` : '');
   $('cartTotal').textContent = fmtMoeda(total);
   updateTicket();
 }
@@ -428,7 +448,19 @@ function updateTicket(){
       <div class="titem"><span class="name">${escapeHtml(i.nomeReferencia)}</span><span class="qty">${escapeHtml(i.codigo)}</span></div>
     `).join('');
   }
-  const total = cart.reduce((s,i) => s + i.valorUnitario * i.quantidade, 0);
+  const subtotal = cart.reduce((s,i) => s + i.valorUnitario * i.quantidade, 0);
+  const desconto = Number($('desconto').value) || 0;
+  const frete = Number($('frete').value) || 0;
+  const total = Math.max(0, subtotal - desconto + frete);
+
+  const totalBox = $('ticketTotal').closest('.ticket-total');
+  let extraHtml = '';
+  if (desconto || frete) {
+    extraHtml = `<div class="tline"><span class="k">Subtotal</span><span class="v">${fmtMoeda(subtotal)}</span></div>`;
+    if (desconto) extraHtml += `<div class="tline"><span class="k">Desconto</span><span class="v">-${fmtMoeda(desconto)}</span></div>`;
+    if (frete) extraHtml += `<div class="tline"><span class="k">Frete</span><span class="v">+${fmtMoeda(frete)}</span></div>`;
+  }
+  $('ticketAdjustments').innerHTML = extraHtml;
   $('ticketTotal').textContent = fmtMoeda(total);
 }
 function setTicketField(id, value, placeholder){
@@ -437,6 +469,8 @@ function setTicketField(id, value, placeholder){
   else { el.textContent = placeholder; el.classList.add('empty'); }
 }
 fields.forEach(f => inputs[f].addEventListener('input', updateTicket));
+$('desconto').addEventListener('input', renderCart);
+$('frete').addEventListener('input', renderCart);
 
 // ---------- Finalizar venda ----------
 $('btnSalvar').addEventListener('click', async () => {
@@ -459,6 +493,8 @@ $('btnSalvar').addEventListener('click', async () => {
       numero: inputs.numero.value.trim(),
       complemento: inputs.complemento.value.trim()
     },
+    desconto: Number($('desconto').value) || 0,
+    frete: Number($('frete').value) || 0,
     itens: cart.map(i => ({ codigo: i.codigo, nomeReferencia: i.nomeReferencia, quantidade: i.quantidade, valorUnitario: i.valorUnitario, custoUnitario: i.custoUnitario }))
   };
 
@@ -491,6 +527,8 @@ $('btnSalvar').addEventListener('click', async () => {
 
 function clearAll(){
   fields.forEach(f => inputs[f].value = '');
+  $('desconto').value = '';
+  $('frete').value = '';
   cart = [];
   clienteEncontrado = false;
   $('clienteBadge').style.display = 'none';
