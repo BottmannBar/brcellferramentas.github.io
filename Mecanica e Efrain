@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recepção — Ordem de Serviço</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14181C;
+    --surface: #FBF9F4;
+    --surface-2: #F1EDE3;
+    --ink: #191C1F;
+    --ink-soft: #565B5F;
+    --line: #DAD4C4;
+    --accent: #E85D2C;      /* safety-orange */
+    --accent-ink: #FFF5EE;
+    --steel: #26495C;       /* steel blue */
+    --steel-soft: #E4ECEF;
+    --ok: #2E7D4F;
+    --err: #C23B2E;
+    --stripe-a: #F2C230;
+    --stripe-b: #1B1E21;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(20,24,28,.06), 0 8px 24px rgba(20,24,28,.08);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hazard{
+    height: 8px;
+    width: 100%;
+    background: repeating-linear-gradient(135deg, var(--stripe-a) 0 14px, var(--stripe-b) 14px 28px);
+  }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  header.top{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    margin: 8px 0 28px;
+    flex-wrap: wrap;
+  }
+  header.top .titles h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size: 30px;
+    color:#F2EEE4;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header.top .titles p{
+    margin:0;
+    color:#A9B0B5;
+    font-size:14px;
+  }
+
+  .os-tag{
+    font-family:'JetBrains Mono', monospace;
+    background: var(--ink);
+    color:#F2EEE4;
+    border: 2px solid #3A3F44;
+    border-radius: 8px;
+    padding: 10px 16px;
+    text-align:center;
+    min-width: 168px;
+  }
+  .os-tag .label{
+    display:block;
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #8F969B;
+    margin-bottom: 4px;
+  }
+  .os-tag .value{
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--stripe-a);
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--steel);
+    margin: 0 0 4px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .card h2 .num{
+    font-family:'JetBrains Mono', monospace;
+    background: var(--steel-soft);
+    color: var(--steel);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size:12px;
+  }
+  .card .hint{
+    margin: 0 0 18px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px;
+  }
+  .field{ grid-column: span 12; display:flex; flex-direction:column; gap:6px; }
+  @media (min-width: 620px){
+    .f-6{ grid-column: span 6; }
+    .f-4{ grid-column: span 4; }
+    .f-3{ grid-column: span 3; }
+    .f-8{ grid-column: span 8; }
+  }
+
+  label{
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  label .opt{ text-transform:none; font-weight:400; color:#9A968A; }
+
+  input[type=text], input[type=email], input[type=date], input[type=number]{
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--ink);
+    width: 100%;
+  }
+  input:focus{
+    outline: none;
+    border-color: var(--steel);
+    box-shadow: 0 0 0 3px var(--steel-soft);
+  }
+  input[disabled]{
+    background: var(--surface-2);
+    color: #9A968A;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  .autofill-note{
+    display:none;
+    align-items:center;
+    gap:6px;
+    font-size: 12.5px;
+    color: var(--ok);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .autofill-note.show{ display:flex; }
+
+  .check-groups{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px,1fr));
+    gap: 14px;
+  }
+  .check-group{
+    border: 1.5px dashed var(--line);
+    border-radius: 8px;
+    padding: 14px 14px 8px;
+  }
+  .check-group .g-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .chk{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding: 6px 0;
+    font-size: 14px;
+    cursor:pointer;
+  }
+  .chk input{ width:17px; height:17px; accent-color: var(--accent); cursor:pointer; }
+
+  .photo-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .sig-wrap{
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    overflow:hidden;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 27px, #E9E4D6 27px 28px);
+  }
+  canvas#sigPad{
+    display:block;
+    width:100%;
+    height: 180px;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .sig-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top: 10px;
+  }
+  .btn-ghost{
+    background:none;
+    border: 1.5px solid var(--line);
+    color: var(--ink-soft);
+    padding: 7px 14px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor:pointer;
+  }
+  .btn-ghost:hover{ border-color: var(--ink-soft); color: var(--ink); }
+
+  .submit-bar{
+    position: sticky;
+    bottom: 16px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap:16px;
+    background: var(--ink);
+    border-radius: 12px;
+    padding: 14px 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    flex-wrap: wrap;
+  }
+  #statusMsg{
+    font-size: 13.5px;
+    color: #C9CFD3;
+    flex: 1;
+    min-width: 200px;
+  }
+  #statusMsg.ok{ color: #7FD8A0; font-weight:600; }
+  #statusMsg.err{ color: #FF9E8C; font-weight:600; }
+
+  button#submitBtn{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 13px 26px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button#submitBtn:hover{ filter: brightness(1.06); }
+  button#submitBtn:disabled{ opacity:.55; cursor:not-allowed; }
+
+  .config-banner{
+    background: #3A2A15;
+    border: 1px solid #6B4A20;
+    color: #F2D9A8;
+    font-size: 13px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .config-banner code{
+    background: rgba(0,0,0,.25);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  ::placeholder{ color: #B8B2A4; }
+</style>
+</head>
+<body>
+
+<div class="hazard"></div>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="titles">
+      <h1>Recepção de Veículo</h1>
+      <p>Ficha de entrada · checklist · orçamento</p>
+    </div>
+    <div class="os-tag">
+      <span class="label">Nº da O.S.</span>
+      <span class="value" id="osPreview">gerado ao enviar</span>
+    </div>
+  </header>
+
+  <div class="config-banner" id="configBanner">
+    ⚠️ Configuração pendente: abra este arquivo e defina <code>WEBAPP_URL</code> no
+    script (final do arquivo) com a URL do seu Google Apps Script implantado.
+    Veja o guia <code>COMO-CONFIGURAR.md</code>.
+  </div>
+
+  <form id="osForm" novalidate>
+
+    <!-- DADOS DO CLIENTE -->
+    <section class="card">
+      <h2><span class="num">01</span> Dados do Cliente</h2>
+      <p class="hint">Digite o CPF primeiro — se o cliente já tiver cadastro, os dados são preenchidos automaticamente.</p>
+      <div class="grid">
+        <div class="field f-4">
+          <label for="cpf">CPF</label>
+          <input type="text" id="cpf" inputmode="numeric" placeholder="000.000.000-00" required>
+          <span class="autofill-note" id="cpfNote">✓ cliente já cadastrado — dados preenchidos</span>
+        </div>
+        <div class="field f-8">
+          <label for="nome">Nome completo</label>
+          <input type="text" id="nome" placeholder="Nome do cliente" required>
+        </div>
+
+        <div class="field f-3">
+          <label for="cep">CEP</label>
+          <input type="text" id="cep" inputmode="numeric" placeholder="00000-000">
+          <span class="autofill-note" id="cepNote">✓ endereço preenchido pelo CEP</span>
+        </div>
+        <div class="field f-6">
+          <label for="endereco">Endereço <span class="opt">(rua)</span></label>
+          <input type="text" id="endereco" placeholder="Preenchido pelo CEP ou digite">
+        </div>
+        <div class="field f-3">
+          <label for="numero">Número</label>
+          <input type="text" id="numero" placeholder="Nº da casa">
+        </div>
+
+        <div class="field f-4">
+          <label for="bairro">Bairro</label>
+          <input type="text" id="bairro">
+        </div>
+        <div class="field f-4">
+          <label for="cidade">Cidade</label>
+          <input type="text" id="cidade">
+        </div>
+        <div class="field f-4">
+          <label for="estado">Estado</label>
+          <input type="text" id="estado" maxlength="24">
+        </div>
+
+        <div class="field f-4">
+          <label for="telefone">Telefone</label>
+          <input type="text" id="telefone" inputmode="numeric" placeholder="(00) 00000-0000" required>
+        </div>
+        <div class="field f-4">
+          <label for="rg">RG</label>
+          <input type="text" id="rg" inputmode="numeric">
+        </div>
+        <div class="field f-4">
+          <label for="dataNascimento">Data de nascimento</label>
+          <input type="date" id="dataNascimento">
+        </div>
+
+        <div class="field f-8">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" placeholder="cliente@email.com">
+        </div>
+      </div>
+    </section>
+
+    <!-- DADOS DO VEÍCULO -->
+    <section class="card">
+      <h2><span class="num">02</span> Dados do Veículo</h2>
+      <div class="grid">
+        <div class="field f-6">
+          <label for="marcaModelo">Marca / Modelo</label>
+          <input type="text" id="marcaModelo" placeholder="Ex: Nissan Kicks" required>
+        </div>
+        <div class="field f-3">
+          <label for="ano">Ano</label>
+          <input type="number" id="ano" placeholder="2020" min="1950" max="2100">
+        </div>
+        <div class="field f-3">
+          <label for="cor">Cor</label>
+          <input type="text" id="cor">
+        </div>
+
+        <div class="field f-4">
+          <label for="motor">Motor / Combustível</label>
+          <input type="text" id="motor" placeholder="Ex: 1.0 Flex">
+        </div>
+        <div class="field f-4">
+          <label for="placas">Placa</label>
+          <input type="text" id="placas" placeholder="ABC-1234" required>
+        </div>
+        <div class="field f-4">
+          <label for="km">KM atual</label>
+          <input type="number" id="km" placeholder="0" min="0">
+        </div>
+
+        <div class="field f-4">
+          <label>Data de entrada <span class="opt">(automática)</span></label>
+          <input type="text" id="dataEntradaPreview" disabled>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHECKLIST -->
+    <section class="card">
+      <h2><span class="num">03</span> Checklist de Revisão</h2>
+      <p class="hint">Marque os itens verificados / com ocorrência nesta recepção.</p>
+      <div class="check-groups" id="checkGroups"></div>
+    </section>
+
+    <!-- FOTO DO VEÍCULO -->
+    <section class="card">
+      <h2><span class="num">04</span> Foto do Veículo <span class="opt" style="text-transform:none;font-weight:400;">(opcional)</span></h2>
+      <p class="hint">Tire uma foto do veículo na entrada. Fica salva na pasta do Drive junto com a assinatura.</p>
+      <div class="photo-row">
+        <label class="btn-ghost photo-pick" for="fotoInput" style="display:inline-block;cursor:pointer;">📷 Tirar / escolher foto</label>
+        <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none;">
+        <button type="button" class="btn-ghost" id="clearFoto" style="display:none;">Remover foto</button>
+      </div>
+      <img id="fotoPreview" style="display:none; max-width:220px; margin-top:12px; border-radius:8px; border:1.5px solid var(--line);">
+    </section>
+
+    <!-- ASSINATURA -->
+    <section class="card">
+      <h2><span class="num">05</span> Assinatura do Cliente <span class="opt" style="text-transform:none;font-weight:400;">(opcional)</span></h2>
+      <div class="sig-wrap">
+        <canvas id="sigPad"></canvas>
+      </div>
+      <div class="sig-actions">
+        <button type="button" class="btn-ghost" id="clearSig">Limpar assinatura</button>
+      </div>
+    </section>
+
+    <div class="submit-bar">
+      <div id="statusMsg">Preencha os campos e envie para registrar a O.S.</div>
+      <button type="submit" id="submitBtn">Registrar entrada</button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURAÇÃO — ajuste antes de publicar
+   ========================================================= */
+const CONFIG = {
+  // Cole aqui a URL do seu Google Apps Script implantado como "App da Web"
+  // (veja COMO-CONFIGURAR.md). Deve terminar em /exec
+  WEBAPP_URL: "COLE_AQUI_A_URL_DO_APPS_SCRIPT",
+
+  // Chave simples só pra evitar envios casuais de fora do formulário.
+  // Precisa bater com a mesma constante no Code.gs.
+  SHARED_TOKEN: "oficina-2026"
+};
+
+if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL.indexOf("COLE_AQUI") !== -1) {
+  document.getElementById('configBanner').style.display = 'block';
+} else {
+  document.getElementById('configBanner').style.display = 'none';
+}
+
+/* =========================================================
+   Checklist — ordem EXATA das colunas da aba RECEPÇÃO
+   ========================================================= */
+const CHECKLIST = [
+  { group: "Revisão",    label: "Básica" },
+  { group: "Revisão",    label: "Viagem" },
+  { group: "Revisão",    label: "Regular" },
+  { group: "Freios",     label: "Barulho" },
+  { group: "Freios",     label: "Vibração" },
+  { group: "Freios",     label: "Anormal" },
+  { group: "Suspensão",  label: "Barulho" },
+  { group: "Suspensão",  label: "Folga" },
+  { group: "Suspensão",  label: "Rangidos" },
+  { group: "Suspensão",  label: "Rolamentos" },
+  { group: "Injeção",    label: "Falha" },
+  { group: "Injeção",    label: "Limpeza" },
+  { group: "Injeção",    label: "Consumo alto" },
+  { group: "Geometria",  label: "Balanceamento" },
+  { group: "Geometria",  label: "Kit" },
+  { group: "Geometria",  label: "Rodízio" },
+  { group: "Geometria",  label: "Puxando D" },
+  { group: "Geometria",  label: "Puxando E" },
+  { group: "Elétrica",   label: "Luzes tras." },
+  { group: "Elétrica",   label: "Luzes diant." },
+  { group: "Elétrica",   label: "Luz int." },
+  { group: "Óleo",       label: "Com filtro" },
+  { group: "Óleo",       label: "Sem filtro" },
+  { group: "Óleo",       label: "Todos os filtros" },
+  { group: "Vazamento",  label: "Óleo" },
+  { group: "Vazamento",  label: "Radiador" },
+  { group: "Vazamento",  label: "Gasolina" },
+  { group: "Outros",     label: "Higienização ar condicionado" },
+  { group: "Outros",     label: "Embreagem" },
+  { group: "Outros",     label: "Correia dentada" },
+  { group: "Outros",     label: "Palhetas" }
+];
+
+const groupsWrap = document.getElementById('checkGroups');
+const groupsMap = {};
+CHECKLIST.forEach((item, idx) => {
+  if (!groupsMap[item.group]) {
+    const el = document.createElement('div');
+    el.className = 'check-group';
+    el.innerHTML = '<div class="g-title">' + item.group + '</div>';
+    groupsWrap.appendChild(el);
+    groupsMap[item.group] = el;
+  }
+  const lbl = document.createElement('label');
+  lbl.className = 'chk';
+  lbl.innerHTML = '<input type="checkbox" data-idx="' + idx + '"> ' + item.label;
+  groupsMap[item.group].appendChild(lbl);
+});
+
+/* =========================================================
+   Preview da data de entrada (o valor real é definido no servidor)
+   ========================================================= */
+document.getElementById('dataEntradaPreview').value =
+  new Date().toLocaleDateString('pt-BR');
+
+/* =========================================================
+   Máscaras simples
+   ========================================================= */
+function onlyDigits(v){ return (v || '').replace(/\D/g, ''); }
+
+function maskCPF(v){
+  v = onlyDigits(v).slice(0,11);
+  v = v.replace(/(\d{3})(\d)/, '$1.$2');
+  v = v.replace(/(\d{3})(\d)/, '$1.$2');
+  v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  return v;
+}
+function maskCEP(v){
+  v = onlyDigits(v).slice(0,8);
+  v = v.replace(/(\d{5})(\d)/, '$1-$2');
+  return v;
+}
+function maskPhone(v){
+  v = onlyDigits(v).slice(0,11);
+  if (v.length > 10) v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  else v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+  return v;
+}
+
+const cpfInput = document.getElementById('cpf');
+const cepInput = document.getElementById('cep');
+const telInput = document.getElementById('telefone');
+
+cpfInput.addEventListener('input', e => e.target.value = maskCPF(e.target.value));
+cepInput.addEventListener('input', e => e.target.value = maskCEP(e.target.value));
+telInput.addEventListener('input', e => e.target.value = maskPhone(e.target.value));
+
+/* =========================================================
+   Autopreenchimento por CEP (ViaCEP)
+   ========================================================= */
+cepInput.addEventListener('blur', async () => {
+  const cep = onlyDigits(cepInput.value);
+  const note = document.getElementById('cepNote');
+  note.classList.remove('show');
+  if (cep.length !== 8) return;
+  try {
+    const res = await fetch('https://viacep.com.br/ws/' + cep + '/json/');
+    const data = await res.json();
+    if (data.erro) return;
+    document.getElementById('endereco').value = data.logradouro || document.getElementById('endereco').value;
+    document.getElementById('bairro').value = data.bairro || document.getElementById('bairro').value;
+    document.getElementById('cidade').value = data.localidade || document.getElementById('cidade').value;
+    document.getElementById('estado').value = data.uf || document.getElementById('estado').value;
+    note.classList.add('show');
+  } catch (err) {
+    console.warn('Falha ao consultar CEP', err);
+  }
+});
+
+/* =========================================================
+   Autopreenchimento por CPF já cadastrado (busca em CONTATOS)
+   ========================================================= */
+cpfInput.addEventListener('blur', async () => {
+  const cpf = onlyDigits(cpfInput.value);
+  const note = document.getElementById('cpfNote');
+  note.classList.remove('show');
+  if (cpf.length !== 11) return;
+  if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL.indexOf("COLE_AQUI") !== -1) return;
+
+  try {
+    const url = CONFIG.WEBAPP_URL + '?action=lookup&cpf=' + cpf;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.found) return;
+    const c = data.contato || {};
+    setIfEmpty('nome', c['NOME']);
+    setIfEmpty('endereco', c['ENDEREÇO']);
+    setIfEmpty('bairro', c['BAIRRO']);
+    setIfEmpty('cidade', c['CIDADE']);
+    setIfEmpty('estado', c['ESTADO']);
+    setIfEmpty('numero', c['Número']);
+    setIfEmpty('cep', c['CEP'] ? maskCEP(String(c['CEP'])) : '');
+    setIfEmpty('telefone', c['TELEFONES'] ? maskPhone(String(c['TELEFONES'])) : '');
+    setIfEmpty('rg', c['RG']);
+    setIfEmpty('email', c['E-MAIL']);
+    note.classList.add('show');
+  } catch (err) {
+    console.warn('Falha ao consultar CPF', err);
+  }
+});
+
+function setIfEmpty(id, value){
+  if (value === undefined || value === null || value === '') return;
+  const el = document.getElementById(id);
+  if (el && !el.value) el.value = value;
+}
+
+/* =========================================================
+   Foto do veículo
+   ========================================================= */
+const fotoInput = document.getElementById('fotoInput');
+const fotoPreview = document.getElementById('fotoPreview');
+const clearFotoBtn = document.getElementById('clearFoto');
+let fotoBase64 = '';
+
+fotoInput.addEventListener('change', () => {
+  const file = fotoInput.files && fotoInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    fotoBase64 = reader.result;
+    fotoPreview.src = fotoBase64;
+    fotoPreview.style.display = 'block';
+    clearFotoBtn.style.display = 'inline-block';
+  };
+  reader.readAsDataURL(file);
+});
+
+clearFotoBtn.addEventListener('click', () => {
+  fotoBase64 = '';
+  fotoInput.value = '';
+  fotoPreview.src = '';
+  fotoPreview.style.display = 'none';
+  clearFotoBtn.style.display = 'none';
+});
+
+/* =========================================================
+   Assinatura (canvas)
+   ========================================================= */
+const canvas = document.getElementById('sigPad');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let hasSignature = false;
+
+function resizeCanvas(){
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * ratio;
+  canvas.height = rect.height * ratio;
+  ctx.scale(ratio, ratio);
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#191C1F';
+}
+window.addEventListener('resize', () => { resizeCanvas(); hasSignature = false; });
+resizeCanvas();
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const point = e.touches ? e.touches[0] : e;
+  return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+}
+function startDraw(e){ drawing = true; hasSignature = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }
+function moveDraw(e){ if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }
+function endDraw(){ drawing = false; }
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', moveDraw);
+window.addEventListener('mouseup', endDraw);
+canvas.addEventListener('touchstart', startDraw, { passive:false });
+canvas.addEventListener('touchmove', moveDraw, { passive:false });
+canvas.addEventListener('touchend', endDraw);
+
+document.getElementById('clearSig').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasSignature = false;
+});
+
+/* =========================================================
+   Envio do formulário
+   ========================================================= */
+const form = document.getElementById('osForm');
+const statusMsg = document.getElementById('statusMsg');
+const submitBtn = document.getElementById('submitBtn');
+const osPreview = document.getElementById('osPreview');
+
+function val(id){ return document.getElementById(id).value.trim(); }
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  statusMsg.className = '';
+
+  if (!CONFIG.WEBAPP_URL || CONFIG.WEBAPP_URL.indexOf("COLE_AQUI") !== -1) {
+    statusMsg.textContent = 'Configure a WEBAPP_URL no arquivo antes de enviar (veja COMO-CONFIGURAR.md).';
+    statusMsg.className = 'err';
+    return;
+  }
+
+  const required = ['cpf','nome','telefone','marcaModelo','placas'];
+  for (const id of required) {
+    if (!val(id)) {
+      statusMsg.textContent = 'Preencha o campo obrigatório: ' + id;
+      statusMsg.className = 'err';
+      document.getElementById(id).focus();
+      return;
+    }
+  }
+
+  const checklist = CHECKLIST.map((_, idx) => {
+    const cb = document.querySelector('input[data-idx="' + idx + '"]');
+    return (cb && cb.checked) ? 'X' : '';
+  });
+
+  const payload = {
+    token: CONFIG.SHARED_TOKEN,
+    cpf: onlyDigits(val('cpf')),
+    nome: val('nome'),
+    cep: onlyDigits(val('cep')),
+    endereco: val('endereco'),
+    numero: val('numero'),
+    bairro: val('bairro'),
+    cidade: val('cidade'),
+    estado: val('estado'),
+    telefone: onlyDigits(val('telefone')),
+    rg: val('rg'),
+    email: val('email'),
+    dataNascimento: val('dataNascimento'),
+    marcaModelo: val('marcaModelo'),
+    motor: val('motor'),
+    ano: val('ano'),
+    cor: val('cor'),
+    placas: val('placas').toUpperCase(),
+    km: val('km'),
+    checklist: checklist,
+    fotoBase64: fotoBase64,
+    assinaturaBase64: hasSignature ? canvas.toDataURL('image/png') : ''
+  };
+
+  submitBtn.disabled = true;
+  statusMsg.textContent = 'Enviando…';
+
+  try {
+    const res = await fetch(CONFIG.WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      osPreview.textContent = '#' + data.numeroOS;
+      statusMsg.textContent = 'O.S. nº ' + data.numeroOS + ' registrada com sucesso!';
+      statusMsg.className = 'ok';
+      form.reset();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasSignature = false;
+      fotoBase64 = '';
+      fotoInput.value = '';
+      fotoPreview.src = '';
+      fotoPreview.style.display = 'none';
+      clearFotoBtn.style.display = 'none';
+      document.getElementById('dataEntradaPreview').value = new Date().toLocaleDateString('pt-BR');
+      document.querySelectorAll('.autofill-note').forEach(n => n.classList.remove('show'));
+    } else {
+      statusMsg.textContent = 'Erro ao registrar: ' + (data.error || 'desconhecido');
+      statusMsg.className = 'err';
+    }
+  } catch (err) {
+    statusMsg.textContent = 'Falha de conexão com a planilha. Tente novamente.';
+    statusMsg.className = 'err';
+    console.error(err);
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
